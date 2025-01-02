@@ -41,9 +41,18 @@ struct gamer {
     int gold;
 };
 
+struct gamers {
+    char username[30];
+    int points;
+    int golds;
+    short matches;
+    short time;
+};
+
 struct gamer player;
 
 void mainMenu();
+void loginForm();
 
 char mainPrompt[100];
 time_t now;
@@ -97,6 +106,13 @@ void initSCR() {
     init_pair(1, COLOR_WHITE, COLOR_BLACK);
     init_pair(2, COLOR_BLACK, COLOR_RED);
     init_pair(3, COLOR_BLACK, COLOR_CYAN);
+
+    init_pair(100, COLOR_BLACK, COLOR_GREEN);
+    init_pair(101, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(102, COLOR_WHITE, COLOR_BLACK);
+    init_pair(103, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(104, COLOR_BLUE, COLOR_BLACK);
+    init_pair(105, COLOR_CYAN, COLOR_BLACK);
 }
 
 short click() {
@@ -399,11 +415,14 @@ void randPass(char pass[]) {
 }
 
 short addUser(struct button butts[]) {
+    time_t now;
+    now = time(NULL);
+
     FILE *fptr;
     fptr = fopen("data/users.txt", "a");
     char line[200] = "\n";
     hash(butts[2].value);
-    fprintf(fptr, "\n%s %s %s 0 0 0", butts[0].value, butts[2].value, butts[1].value);
+    fprintf(fptr, "\n%s %s %s 0 0 0 %lld", butts[0].value, butts[2].value, butts[1].value, (long long int)now);
     fclose(fptr);
     return 1;
     /*
@@ -471,6 +490,8 @@ void signupForm() {
                 active = 4;
                 if (1-state){
                     endwin();
+                    clear();
+                    loginForm();
                     return;
                 }
             } break;
@@ -548,7 +569,6 @@ void authorize(struct button butts[]) {
 }
 
 void login(struct button butts[]) {
-    printf("Logging in");
     player.anonymous = 0;
     strcpy(player.username, butts[0].value);
 }
@@ -665,43 +685,243 @@ void loginForm() {
     }
 }
 
+void continueForm() {
+    initSCR();
+    
+    timer = 5;
+    short i = 0, files[100], ver;
+    
+    FILE *fptr;
+    fptr = fopen("games_saved/games.txt", "r");
+    char line[30], user[30];
+    while (fgets(line, 30, fptr)) {
+
+        sscanf(line, "%s %hd", user, &ver);
+        if (!strcmp(user, player.username)) {
+            
+            files[i++] = ver;
+        }
+    }
+    fclose(fptr);
+    files[i] = -1;
+    struct button butts[100];
+    for (short j = 0; j < i; j++) {
+        butts[j].type = 0;
+        sprintf(butts[j].label, "Game Id %hd", files[j]);
+        butts[j].state = 0;
+        sprintf(butts[j].value, "%hd", files[j]);
+        printf("%d\n", j);
+    }
+    butts[0].state = 1;
+    
+    short state = 1, active = 0;
+    while (state) {
+        int ind = menu(butts, i, 1, active, "Continue Game Id: ");
+        if (ind == 0) {
+            clear();
+            endwin();
+            mainMenu();
+            return;
+        }
+        FILE *fptr;
+        char dir[40];
+        sprintf(dir, "games_saved/%s$%d.txt", player.username, ind);
+        fptr = fopen(dir, "r");
+        char file[200][200], line[200];
+        short i = 0;
+        while (fgets(line, 200, fptr)) {
+            strcpy(file[i++], line);
+        }
+        fclose(fptr);
+
+        /*
+        Reading The Map And Start The Game
+        */ 
+        Prompt("Starting Game");  
+    }
+}
+
+void printRanking(struct gamers li[], short offset) {
+    int row, col;
+    getmaxyx(stdscr, row, col);
+    attron(COLOR_PAIR(100));
+    for (int i = 0; i< col; i++)mvprintw(2,i," ");
+    mvprintw(2,0,"Rank");
+    mvprintw(2,7,"Username");
+    mvprintw(2,40,"Points");
+    mvprintw(2,50,"Golds");
+    mvprintw(2,60,"Matches");
+    mvprintw(2,70,"Days");
+    for (short i = offset; i < row + offset - 3; i++) {
+        
+        switch (i) {
+            case 0: {
+                attron(COLOR_PAIR(101));
+                mvprintw(3+i-offset,1,"G");
+
+            } break;
+            case 1: {
+                attron(COLOR_PAIR(102));
+                mvprintw(3+i-offset,1,"S");
+
+            } break;
+            case 2: {
+                attron(COLOR_PAIR(103));
+                mvprintw(3+i-offset,1,"B");
+
+            } break;
+            default: {
+                if (i%2) attron(COLOR_PAIR(104));
+                else attron(COLOR_PAIR(105));
+            }
+        }
+        if (1-player.anonymous && !strcmp(player.username, li[i].username)) {
+            attron(A_BOLD);
+            attron(A_ITALIC);
+            attron(A_STANDOUT);
+            for (short j = 0; j<col; j++) {
+                mvprintw(3+i-offset, j, " ");
+            }
+        }
+        mvprintw(3+i-offset,0,"%d",i+1);
+        mvprintw(3+i-offset,7,"%s", li[i].username);
+        mvprintw(3+i-offset,40,"%d", li[i].points);
+        mvprintw(3+i-offset,50,"%d", li[i].golds);
+        mvprintw(3+i-offset,60,"%hd", li[i].matches);
+        mvprintw(3+i-offset,70,"%d", li[i].time/60/60/24);
+        attroff(A_ITALIC);
+        attroff(A_BOLD);
+        attroff(A_STANDOUT);
+    }
+}
+
+
+void Ranking() {
+    initSCR();
+    
+    timer = 5;
+    struct gamers li[1000];
+    char username[30], unwanted[30];
+    int points, golds;
+    short matches, i = 0;
+    unsigned long long tim;
+    FILE *fptr;
+    fptr = fopen("data/users.txt", "r");
+    char line[200];
+    while (fgets(line, 200, fptr)) {
+        if (line[0] == '\0') continue;
+        sscanf(line, "%s %s %s %d %d %hd %llu", username, unwanted, unwanted, &points, &golds, &matches, &tim);
+        strcpy(li[i].username, username);
+        li[i].points = points;
+        li[i].golds = golds;
+        li[i].matches = matches;
+        time_t now;
+        now = time(NULL);
+        li[i].time = now - tim;
+        i++;
+    }
+    fclose(fptr);
+    for (int j = 0; j < i; j++) {
+        for (int k = j; k < i; k++) {
+            if (li[j].points < li[k].points);
+            struct gamers temp = li[j];
+            li[j] = li[k];
+            li[k] = temp;
+        }
+    }
+    strcat(li[0].username, " the Greatest");
+    strcat(li[1].username, " the Greater");
+    strcat(li[2].username, " the Great");
+    short offset = 0, row = getmaxy(stdscr);
+    while (1) {
+        printRanking(li, offset);
+        char c = getch();
+        switch(c) {
+            case ES: {
+                clear();
+                endwin();
+                mainMenu();
+                return;
+            } break;
+            case UA: {
+                if (offset > 0) offset--;
+                clear();
+            } break;
+            case LA: {
+                if (offset > row-2) offset-=row-3;
+                else offset = 0;
+                clear();
+            } break;
+            case DA: {
+                if (offset < i - row + 2) offset++;
+                clear();
+            } break;
+            case RA: {
+                if (offset < i - 2*row + 2) offset+=row-3;
+                else offset = i-row+2;
+                clear();
+            } break;
+        }
+    }
+}
+
+
+
 void mainMenu() {
     initSCR();
     
     timer = 5;
+    short i = 0;
 
-    struct button butts[5];
-    butts[0].type = 0;
-    strcpy(butts[0].label, "Enter Game As ");
-    strcat(butts[0].label, player.username);
-    butts[0].state = 1;
-    strcpy(butts[0].value,"2");
-    butts[1].type = 0;
-    butts[1].state = 0;
-    if (player.anonymous) {
-        strcpy(butts[1].label, "Log In!");
-        strcpy(butts[1].value, "3");
-    } else {
-        strcpy(butts[1].label, "Log Out");
-        strcpy(butts[1].value, "7");
+    struct button butts[6];
+    butts[i].type = 0;
+    strcpy(butts[i].label, "Start New Game As ");
+    strcat(butts[i].label, player.username);
+    butts[i].state = 1;
+    strcpy(butts[i].value,"1");
+    i++;
+
+    if (1 - player.anonymous) {
+        butts[i].type = 0;
+        strcpy(butts[i].label, "Continue Game As ");
+        strcat(butts[i].label, player.username);
+        butts[i].state = 0;
+        strcpy(butts[i].value,"2");
+        i++;
     }
-    butts[2].type = 0;
-    strcpy(butts[2].label, "Sign Up");
-    butts[2].state = 0;
-    strcpy(butts[2].value,"4");
-    butts[3].type = 0;
-    strcpy(butts[3].label, "See the GOATs of the Game");
-    butts[3].state = 0;
-    strcpy(butts[3].value,"5");
-    butts[4].type = 0;
-    strcpy(butts[4].label, "Setting");
-    butts[4].state = 0;
-    strcpy(butts[4].value,"6");
+
+    butts[i].type = 0;
+    butts[i].state = 0;
+    if (player.anonymous) {
+        strcpy(butts[i].label, "Log In!");
+        strcpy(butts[i].value, "3");
+    } else {
+        strcpy(butts[i].label, "Log Out");
+        strcpy(butts[i].value, "7");
+    }
+    i++;
+
+    butts[i].type = 0;
+    strcpy(butts[i].label, "Sign Up");
+    butts[i].state = 0;
+    strcpy(butts[i].value,"4");
+    i++;
+
+    butts[i].type = 0;
+    strcpy(butts[i].label, "See the GOATs of the Game");
+    butts[i].state = 0;
+    strcpy(butts[i].value,"5");
+    i++;
+    
+    butts[i].type = 0;
+    strcpy(butts[i].label, "Setting");
+    butts[i].state = 0;
+    strcpy(butts[i].value,"6");
     
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 5, 1, active, "Main Menu");
+        int ind = menu(butts, i+1, 1, active, "Main Menu");
         switch (ind) {
             case 0: {
                 clear();
@@ -709,8 +929,14 @@ void mainMenu() {
                 printf("Thanks for playing our game! Hope to see you again, soon!");
                 return;
             } break;
+            case 1:{
+                // Go To the New Game
+            } break;
             case 2:{
-                // Go To the Game
+                clear();
+                endwin();
+                continueForm();
+                return;
             } break;
             case 3: {
                 clear();
@@ -725,7 +951,10 @@ void mainMenu() {
                 return;
             } break;
             case 5:{
-                // Go To the Ranking
+                clear();
+                endwin();
+                Ranking();
+                return;
             } break;
             case 6:{
                 // Go To the Setting

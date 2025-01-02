@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:0.0.2*/
+/* By Roham Ghasemi Qomi; The Rogue; v:0.4.1*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -823,10 +823,11 @@ void Ranking() {
     fclose(fptr);
     for (int j = 0; j < i; j++) {
         for (int k = j; k < i; k++) {
-            if (li[j].points < li[k].points);
-            struct gamers temp = li[j];
-            li[j] = li[k];
-            li[k] = temp;
+            if (li[j].points < li[k].points) {
+                struct gamers temp = li[j];
+                li[j] = li[k];
+                li[k] = temp;
+            }
         }
     }
     strcat(li[0].username, " the Greatest");

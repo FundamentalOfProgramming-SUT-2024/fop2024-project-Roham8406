@@ -1,11 +1,12 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:0.4.1*/
+/* By Roham Ghasemi Qomi; The Rogue; v:0.5.0*/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
 #include <ncurses.h>
 #include <time.h>
 #include <unistd.h>
+#include "track.c"
 
 
 
@@ -16,6 +17,8 @@
 #define ES 27
 #define BS 7 
 
+#define MUSICS 4
+
 
 
 struct button {
@@ -25,9 +28,13 @@ struct button {
         1 : number;
         2 : txt;
         3 : email;
+        4 : choose
     */
     char value[100];
     char label[100];
+    short options;
+    char list[10][30];
+    short currentOption;
     short state;
     short len;
     short (*check) (char value[]);
@@ -49,7 +56,24 @@ struct gamers {
     short time;
 };
 
+struct game {
+    short colour;
+    short difficulty;
+    short music;
+    /*
+    struct maps
+    */
+};
+
+struct track {
+    char name[20];
+    char dir[30]; 
+};
+
 struct gamer player;
+struct game match;
+struct track tracks[MUSICS];
+
 
 void mainMenu();
 void loginForm();
@@ -89,6 +113,20 @@ void inits() {
     srand(time(NULL));
     player.anonymous = 1;
     strcpy(player.username, "Guest");
+    short i = 0;
+    strcpy(tracks[i].name, "Warfare");
+    strcpy(tracks[i].dir, "tracks/Warfare.mp3");
+    i++;
+    strcpy(tracks[i].name, "Hitman");
+    strcpy(tracks[i].dir, "tracks/Harfare.mp3");
+    i++;
+    strcpy(tracks[i].name, "In Dreams");
+    strcpy(tracks[i].dir, "tracks/indreams.mp3");
+    i++;
+    strcpy(tracks[i].name, "Motivatio");
+    strcpy(tracks[i].dir, "tracks/Motivation.mp3");
+    i++;
+    // play(tracks[0].dir);
 }
 
 void initInp(char inp[], short n) {
@@ -142,6 +180,40 @@ short click() {
     return 0;
 }
 
+short choose() {
+    short state = 1;
+    while (state) {
+        usleep(DELAY);
+        endTime();
+        char c = getch();
+        if (c) {
+            switch(c) {
+                case ES: {
+                    return 0;
+                } break;
+                case ' ': {
+                    return 2;
+                } break;
+                case DA:
+                case '\n': {
+                    return 1;
+                } break;
+                case UA: {
+                    return -1;
+                }break;
+                case RA: {
+                    return 3;
+                } break;
+                case LA: {
+                    return 4;
+                }break;
+            }
+        }
+        usleep(DELAY);
+    }
+    return 0;
+}
+
 int printMenu(struct button butts[], char title[], short len, short ii) {
     // clear();
     // refresh();
@@ -153,10 +225,12 @@ int printMenu(struct button butts[], char title[], short len, short ii) {
         mvprintw(2, (col-strlen(title))/2, "%s", title);
         attroff(A_STANDOUT);
         for (short i = 0; i < len; i++) {
+            for (short j = 0; j < col; j++) {mvprintw(i*2+5,j," ");}
             if (butts[i].state) attron(COLOR_PAIR(2));
             else attron(COLOR_PAIR(1));
-            if (butts[i].type) mvprintw(i*2 + 5, (col/2) - strlen(butts[i].label), "%s %s", butts[i].label, butts[i].value);
-            else               mvprintw(i*2 + 5, (col - strlen(butts[i].label))/2, "%s", butts[i].label);
+            if (butts[i].type > 0 && butts[i].type < 4) mvprintw(i*2 + 5, (col/2) - strlen(butts[i].label), "%s %s", butts[i].label, butts[i].value);
+            else if (butts[i].type == 0)                mvprintw(i*2 + 5, (col - strlen(butts[i].label))/2, "%s", butts[i].label);
+            else if (butts[i].type == 4)                mvprintw(i*2 + 5, (col/2) - strlen(butts[i].label), "%s <- %s ->", butts[i].label, butts[i].list[butts[i].currentOption]);
             if (butts[i].state && ii != -1) {
                 attron(A_STANDOUT);
                 attron(A_UNDERLINE);
@@ -281,6 +355,42 @@ short menu (struct button butts[], short len, short end, short active, char titl
                 }
             }
         }
+        case (4): {
+            short res = choose();
+            short temp = active;
+            switch(res) {
+                case 1: {
+                    active+=2;
+                }
+                case -1: {
+                    butts[temp].state = 0;
+                    active--;
+                    active += len;
+                    active %= len;
+                    char r[10];
+                    sprintf(r, "%d", butts[temp].currentOption);
+                    (*(butts[temp].check))(r);
+                    return menu(butts, len, end, active, title);
+                }
+                case 3: {
+                    butts[temp].currentOption+=2;
+                }
+                case 4: {
+                    butts[temp].currentOption--;
+                    butts[temp].currentOption = (butts[temp].currentOption + butts[temp].options) % butts[temp].options;
+                    return menu(butts, len, end, active, title);
+                }
+                case 2: {
+                    char r[10];
+                    sprintf(r, "%d", butts[temp].currentOption);
+                    (*(butts[temp].check))(r);
+                } break;
+                case 0: {
+                    if (end) return 0;
+                }
+            }
+            return menu(butts, len, end, active, title);
+        }
     }
 }
 
@@ -397,6 +507,33 @@ short checkPassword(char pass[]) {
         Prompt("Password doesn't contain any lowercase letters!");
         return 0;
     }
+    return 1;
+}
+
+short chooseColour(char r[]) {
+    short d;
+    sscanf(r, "%hd", &d);
+    match.colour = d;
+    return 1;
+}
+
+short chooseDifficulty(char r[]) {
+    short d;
+    sscanf(r, "%hd", &d);
+    match.difficulty = d;
+    return 1;
+}
+
+short chooseTrack(char r[]) {
+
+    /*
+    Incable of playing(game) and playing(sound)
+    */
+    short d;
+    sscanf(r, "%hd", &d);
+    char dir[30];
+    strcpy(dir, tracks[d].dir);
+    play(dir);
     return 1;
 }
 
@@ -742,6 +879,10 @@ void continueForm() {
 }
 
 void printRanking(struct gamers li[], short offset) {
+    /*
+    Unable of changing font;
+    Unable of adding emoji;
+    */
     int row, col;
     getmaxyx(stdscr, row, col);
     attron(COLOR_PAIR(100));
@@ -757,7 +898,7 @@ void printRanking(struct gamers li[], short offset) {
         switch (i) {
             case 0: {
                 attron(COLOR_PAIR(101));
-                mvprintw(3+i-offset,1,"G");
+                mvprintw(3+i-offset,1,"%s", "G");
 
             } break;
             case 1: {
@@ -867,6 +1008,62 @@ void Ranking() {
 }
 
 
+void Setting() {
+    initSCR();
+    
+    timer = 5;
+    short i = 0, files[100], ver;
+    
+    struct button butts[3];
+    butts[0].type = 4;
+    strcpy(butts[0].label, "Colour of the Hero: ");
+    butts[0].state = 1;
+    butts[0].options = 6;
+    butts[0].currentOption = 0;
+    strcpy(butts[0].list[0], "Red");
+    strcpy(butts[0].list[1], "Blue");
+    strcpy(butts[0].list[2], "Magmenta");
+    strcpy(butts[0].list[3], "Cyan");
+    strcpy(butts[0].list[4], "Green");
+    strcpy(butts[0].list[5], "White");
+    butts[0].check = *chooseColour;
+    butts[1].type = 4;
+    strcpy(butts[1].label, "Difficulty of the Game: ");
+    butts[1].state = 0;
+    butts[1].options = 3;
+    butts[1].currentOption = 0;
+    strcpy(butts[1].list[0], "Noob");
+    strcpy(butts[1].list[1], "So-So");
+    strcpy(butts[1].list[2], "Legend");
+    butts[1].check = *chooseDifficulty;
+    butts[2].type = 4;
+    strcpy(butts[2].label, "Background Music: ");
+    butts[2].state = 0;
+    butts[2].options = MUSICS;
+    butts[2].currentOption = 0;
+    for (short i = 0; i < MUSICS; i++) {
+        strcpy(butts[2].list[i], tracks[i].name);
+    }
+    butts[2].check = *chooseTrack;
+    
+    
+    short state = 1, active = 0;
+    while (state) {
+        int ind = menu(butts, 3, 1, active, "Settings: ");
+        if (ind == 0) {
+            clear();
+            endwin();
+            mainMenu();
+            return;
+        }
+        for (short i = 0; i < 3; i++) {
+            (*(butts[i].check))(butts[i].list[butts[i].currentOption]);
+        }
+
+    }
+}
+
+
 
 void mainMenu() {
     initSCR();
@@ -958,7 +1155,9 @@ void mainMenu() {
                 return;
             } break;
             case 6:{
-                // Go To the Setting
+                clear();
+                endwin();
+                Setting();
             } break;
             case 7:{
                 player.anonymous = 1;

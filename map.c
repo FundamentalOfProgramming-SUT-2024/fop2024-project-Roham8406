@@ -1,4 +1,4 @@
-/* ver: 0.2.0 */
+/* ver: 0.2.1 */
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <string.h>
@@ -716,7 +716,7 @@ void initThemes() {
 }
 
 short isNightmare() {
-    return roomFinder(match.rooms[match.level], match.pos) == 3;
+    return match.rooms[match.level][roomFinder(match.rooms[match.level], match.pos)].type == 3;
 }
 
 short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {

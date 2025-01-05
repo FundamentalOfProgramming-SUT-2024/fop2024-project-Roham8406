@@ -1,8 +1,8 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:0.5.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:0.6.0*/
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ncurses.h>
 #include <time.h>
 #include <unistd.h>
@@ -18,6 +18,13 @@
 #define BS 7 
 
 #define MUSICS 4
+
+#define MAXx 150
+#define MAXy 40
+#define ax 2
+#define bx 1
+#define ay 1
+#define by 2
 
 
 
@@ -40,12 +47,17 @@ struct button {
     short (*check) (char value[]);
 };
 
+typedef struct {
+    short x;
+    short y;
+} pair;
+
 struct gamer {
     short anonymous;
     char username[10];
     // struct inventory
-    int point;
-    int gold;
+    // int point;
+    // int gold;
 };
 
 struct gamers {
@@ -56,14 +68,61 @@ struct gamers {
     short time;
 };
 
+typedef struct {
+    short state;
+    short type;
+    /*
+    0
+    1 Normal
+    2 Hidden
+    3 Known Hiddedn
+    4 Locked
+    5 Unlocked
+    */
+    short room;
+    pair pos;
+    short end;
+} door;
+
+typedef struct {
+    short state;
+    short type;
+    /*
+    0 No Room
+    1 Normal
+    2 Enchant
+    3 Nightmare
+    4 Treasure
+    */
+    pair tl;
+    pair br;
+    door doors[3];
+    short nei[11];
+    short neiC;
+} room;
+
+
 struct game {
     short colour;
     short difficulty;
     short music;
-    /*
-    struct maps
-    */
+    char maps[4][MAXy][MAXx];
+    char seen[4][MAXy][MAXx];
+    room rooms[5][12];
+    short level;
+    pair pos;
+    short health;
+    short hunger;
+    short food[4];
+    short gold;
+    short arm[5];
+    short equArm;
+    short elixir[3];
+    short key;
+    short brKey;
 };
+
+
 
 struct track {
     char name[20];
@@ -170,7 +229,8 @@ short click() {
                 case UA: {
                     return -1;
                 }break;
-                case '\n' : {
+                case '\n':
+                case ' ': {
                     return 2;
                 }
             }
@@ -221,6 +281,7 @@ int printMenu(struct button butts[], char title[], short len, short ii) {
     getmaxyx(stdscr, row, col);
     
     // while (1) {
+        attron(COLOR_PAIR(1));
         attron(A_STANDOUT);
         mvprintw(2, (col-strlen(title))/2, "%s", title);
         attroff(A_STANDOUT);
@@ -234,9 +295,11 @@ int printMenu(struct button butts[], char title[], short len, short ii) {
             if (butts[i].state && ii != -1) {
                 attron(A_STANDOUT);
                 attron(A_UNDERLINE);
+                attron(A_BLINK);
                 mvprintw(i*2 + 5, (col/2) + ii + 1, "%c", butts[i].value[ii] == '\0' ? ' ' : butts[i].value[ii]);
                 attroff(A_STANDOUT);
                 attroff(A_UNDERLINE);
+                attroff(A_BLINK);
             }
             attron(COLOR_PAIR(1));
 
@@ -894,12 +957,12 @@ void printRanking(struct gamers li[], short offset) {
     mvprintw(2,60,"Matches");
     mvprintw(2,70,"Days");
     for (short i = offset; i < row + offset - 3; i++) {
-        
+        attron(A_UNDERLINE);
+        attron(A_ITALIC);
         switch (i) {
-            case 0: {
+            case 0: {                
                 attron(COLOR_PAIR(101));
                 mvprintw(3+i-offset,1,"%s", "G");
-
             } break;
             case 1: {
                 attron(COLOR_PAIR(102));
@@ -912,6 +975,8 @@ void printRanking(struct gamers li[], short offset) {
 
             } break;
             default: {
+                attroff(A_UNDERLINE);
+                attroff(A_ITALIC);
                 if (i%2) attron(COLOR_PAIR(104));
                 else attron(COLOR_PAIR(105));
             }
@@ -933,6 +998,7 @@ void printRanking(struct gamers li[], short offset) {
         attroff(A_ITALIC);
         attroff(A_BOLD);
         attroff(A_STANDOUT);
+        attroff(A_UNDERLINE);
     }
 }
 
@@ -1173,8 +1239,8 @@ void mainMenu() {
 
 
 
-int main () {
-    inits();    
-    mainMenu();   
-    return 0;
-}
+// int main () {
+//     inits();    
+//     mainMenu();   
+//     return 0;
+// }

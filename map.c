@@ -77,7 +77,7 @@ void delgPrompt() {
     int row, col;
     getmaxyx(stdscr, row, col);
     for (int i = 0; i < col; i++){
-        mvprintw(1, i, " ");
+        mvprintw(0, i, " ");
     }
 }
 void gPrompt(char txt[]) {
@@ -87,7 +87,7 @@ void gPrompt(char txt[]) {
     int row, col;
     getmaxyx(stdscr, row, col);
     attron(COLOR_PAIR(3));
-    mvprintw(1, 4, "%s", gamePrompt);
+    mvprintw(0, 4, "%s", gamePrompt);
     attroff(COLOR_PAIR(3));
 }
 void gendTime() {
@@ -104,11 +104,12 @@ short isIn(pair a, pair b, pair c) {
     if (b.x >= a.x && b.x <= c.x && b.y >= a.y && b.y <= c.y) return 1;
     return 0;
 }
-void insertMap(char map[MAXy][MAXx], room rooms[12]) {
+void insertMap(char map[MAXy][MAXx], room rooms[12], char map2[MAXy][MAXx]) {
 
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
             map[i][j] = 0;
+            map2[i][j] = 0;
         }
     }
 
@@ -233,6 +234,13 @@ short roomFinder(room rooms[12], pair pnt) {
     }
     return -1;
 }
+short isRoom() {
+    return roomFinder(match.rooms[match.level], match.pos) != -1;
+}
+
+short isNightmare() {
+    return isRoom() && match.rooms[match.level][roomFinder(match.rooms[match.level], match.pos)].type == 3;
+}
 
 short doorFinder(door doors[36], short ind, room rooms[12], char main[MAXy][MAXx]) {
     
@@ -300,7 +308,7 @@ short doorFinder(door doors[36], short ind, room rooms[12], char main[MAXy][MAXx
     return 0;
 }
 
-int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *first, pair *stair) {
+int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *first, pair *stair, char map2[MAXy][MAXx]) {
     
     for (short i = 0; i < 13; i++) {
         rooms[i].state = 0;
@@ -403,15 +411,15 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             }
         }
     }
-    if (k < 6 || drs%2 || drs < 2*k-2) {return floorRandomizer(rooms, map, level, first, stair);}
-    insertMap(map, rooms);
+    if (k < 6 || drs%2 || drs < 2*k-2) {return floorRandomizer(rooms, map, level, first, stair, map2);}
+    insertMap(map, rooms, map2);
     for (short i = 0; i < 36; i++) {
         if (doors[i].state) {
-            if (!doorFinder(doors, i, rooms, map)) return floorRandomizer(rooms, map, level, first, stair);
+            if (!doorFinder(doors, i, rooms, map)) return floorRandomizer(rooms, map, level, first, stair, map2);
         }
     }
     connect(rooms, 0);
-    if (!isConnected(rooms)) return floorRandomizer(rooms, map, level, first, stair);
+    if (!isConnected(rooms)) return floorRandomizer(rooms, map, level, first, stair, map2);
 
 
     for (short i = 0; i < 36 && doors[i].end != -1; i++) {
@@ -546,66 +554,108 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
     do {r = (level == 4) ? 5 : rand() % k;}
     while(0);
     // while (isIn(rooms[k].tl, *stair, rooms[k].br) && rooms[k].type != 4); /* Sometimes falls in infinite loop */
-    stair->x = rooms[r].tl.x + 1 + rand()%(rooms[r].br.x - rooms[r].tl.x - 1);
-    stair->y = rooms[r].tl.y + 1 + rand()%(rooms[r].br.y - rooms[r].tl.y - 1);
+    stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
+    stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);
     map[stair->y][stair->x] = 23;
     *first = rooms[r];
+    for (short i = 0; i < 12 && rooms[i].state; i++) {
+        if (rooms[i].doors[1].type == 4) {
+            int j = rand() % 4;
+            switch (j) {
+                case 0: map[rooms[i].tl.y+1][rooms[i].tl.x+1] = 14; break;
+                case 1: map[rooms[i].tl.y+1][rooms[i].br.x-1] = 14; break;
+                case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
+                case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
+            }
+        }
+    }
         
 
     return sum;
 }
 
-void printMap(char map[MAXy][MAXx], short level) {
+void printMap(char map[MAXy][MAXx], short level, short cheat) {
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
-            mvprintw(i+2,j, " ");
+            mvprintw(i+1,j, " ");
         }
-
     }
+    char li[5][15] = {"Mace", "Dagger", "Magic Wand", "Normal Arrow", "Sword"};
+
+    char invents[MAXx];
+    sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, li[match.equArm], match.arm[match.equArm], match.health, match.hunger);
+    attron(COLOR_PAIR(4));
+    mvprintw(1, 4, "%s", invents);
     attron(A_BOLD);
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
-            short ch, cr, cr2 = -1, type;
+            short reveal = cheat == 1;
+            int ch, cr, cr2 = -1, type;
             pair temp = {j, i};
             type = roomFinder(match.rooms[level], temp);
             
             if (type != -1) type = match.rooms[level][type].type;
-            // else mvprintw(2+i, j, "%d", type);
-            switch(map[i][j]) {
-                case 0: ch = ' '; cr2 = 26; break;
-                case 5: ch = '_'; cr = 0; break;
-                case 6: ch = '|'; cr = 0; break;
-                case 7: ch = '.'; cr = 1; break;
-                case 8: ch = '+'; cr = 0; break;
-                // case 9: ch = '?'; cr = 0; break;
-                case 9: ch = (map[i-1][j] == 6 || map[i+1][j] ==  6) ? '|' : '_'; cr = 0; break;
-                case 10: ch = '?'; cr = 0; break;
-                case 11: ch = '&'; cr2 = 27; break;
-                case 12: ch = '&'; cr2 = 28; break;
-                case 13: ch = '#'; cr2 = 29; break;
-                case 20: ch = 'O'; cr = 0; break;
-                case 21: ch = '.'; cr = 1; break;
-                case 22: ch = '^'; cr = 1; break;
-                case 23: ch = '>'; cr = 2; break;
-                case 24: ch = '<'; cr = 2; break;
-                case 25:
-                case 26:
-                case 27:
-                case 28: ch = 'F'; cr = 6; break;
-                case 29: ch = 'G'; cr = 4; break;
-                case 30: ch = 'B'; cr = 3; break;
-                case 31: ch = 'M'; cr = 5; break;
-                case 32: ch = 'D'; cr = 5; break;
-                case 33: ch = 'W'; cr = 5; break;
-                case 34: ch = 'A'; cr = 5; break;
-                case 35: ch = 'S'; cr = 5; break;
-                case 36: ch = 'H'; cr = 7; break;
-                case 37: ch = 'X'; cr = 7; break;
-                case 38: ch = 'E'; cr = 7; break;
-                case 39: ch = 'K'; cr = 5; break;
 
-                defualt: ch = ' '; cr2 = 26; break;
+            switch (type) {
+                case (-1): {
+                    if (match.seen[match.level][i][j]) reveal = 1;
+                    if (abs(i - match.pos.y) + abs(j - match.pos.x) < 5  && 
+                    (!isRoom() || match.maps[match.level][match.pos.y][match.pos.x] == 8 ||
+                    match.maps[match.level][match.pos.y][match.pos.x] == 10 ||
+                    match.maps[match.level][match.pos.y][match.pos.x] == 12 )) reveal = 1;
+                } break;
+                case 3: {
+                    short room = roomFinder(match.rooms[level], match.pos);
+                    if (abs(i - match.pos.y) < 3 && abs(j - match.pos.x) < 3 &&
+                        match.rooms[match.level][room].type == 3) reveal = 1; 
+                } break;
+                default: {
+                    short room = roomFinder(match.rooms[level], temp);
+                    if (match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x]) reveal = 1;
+                }
+            }
+            if (reveal) {
+                // if ((abs(match.pos.y - i) > 5 || abs(match.pos.x - j) > 5) && cheat == 2) cheat = 0;
+                /* Incapable of showing near traps and hidden doors*/
+                switch(map[i][j]) {
+                    case 0: ch = ' '; cr2 = 26; break;
+                    case 5: ch = '_'; cr = 0; break;
+                    case 6: ch = '|'; cr = 0; break;
+                    case 7: ch = '.'; cr = 1; break;
+                    case 8: ch = '+'; cr = 0; break;
+                    // case 9: ch = '?'; cr = 0; break;
+                    case 9: ch = cheat == 2 ? '?' : (map[i-1][j] == 6 || map[i+1][j] ==  6) ? '|' : '_'; cr = 0; break;
+                    case 10: ch = '?'; cr = 0; break;
+                    case 11: ch = '@'; cr2 = 27; break;
+                    case 12: ch = '@'; cr2 = 28; break;
+                    case 13: ch = '#'; cr2 = 29; break;
+                    case 14: ch = '&'; cr = 5; break;
+                    case 20: ch = 'O'; cr = 0; break;
+                    case 21: ch = cheat == 2 ? '^' : '.'; cr = 1; break;
+                    case 22: ch = '^'; cr = 1; break;
+                    case 23: ch = '>'; cr = 2; break;
+                    case 24: ch = '<'; cr = 2; break;
+                    case 25:
+                    case 26:
+                    case 27:
+                    case 28: ch = 'F'; cr = 6; break;
+                    case 29: ch = 'G'; cr = 4; break;
+                    case 30: ch = 'B'; cr = 3; break;
+                    case 31: ch = 'M'; cr = 5; break;
+                    case 32: ch = 'D'; cr = 5; break;
+                    case 33: ch = 'W'; cr = 5; break;
+                    case 34: ch = 'A'; cr = 5; break;
+                    case 35: ch = 'S'; cr = 5; break;
+                    case 36: ch = 'H'; cr = 7; break;
+                    case 37: ch = 'X'; cr = 7; break;
+                    case 38: ch = 'E'; cr = 7; break;
+                    case 39: ch = 'K'; cr = 5; break;
 
+                    defualt: ch = ' '; cr2 = 26; break;
+
+                }
+            } else {
+                ch = ' '; cr2 = 26;
             }
             if (cr2 != -1){
                 attron(COLOR_PAIR(cr2));
@@ -639,11 +689,11 @@ void mapCreator() {
                 match.maps[i][k][j] = 0;
             }
         }
-        floorRandomizer(match.rooms[i], match.maps[i], i + 1, &first, &stair);
+        floorRandomizer(match.rooms[i], match.maps[i], i + 1, &first, &stair, match.seen[i]);
     }
     match.health = 100;
     match.hunger = 0;
-    printMap(match.maps[match.level], match.level);
+    printMap(match.maps[match.level], match.level, 0);
     return;
 }
 
@@ -659,6 +709,7 @@ void initThemes() {
     init_color(11, 600, 600, 600); // Grey
     init_color(12, 600, 999, 200); // Yellowish Green
 
+    init_pair(4, COLOR_CYAN, 10);
     init_pair(26, 10, 10);                   //Void
     init_pair(27, COLOR_RED, 10);            //Locked
     init_pair(28, COLOR_GREEN, 10);          //Unlocked
@@ -684,14 +735,14 @@ void initThemes() {
     init_pair(47, COLOR_MAGENTA, 10);        //Elixir
 
     /* Nightmare Rooms */
-    init_pair(50, COLOR_BLACK, 10);        //Walls
-    init_pair(51, COLOR_BLACK, 10);        //Floor  
-    init_pair(52, COLOR_BLACK, COLOR_RED); //Stairs
-    init_pair(53, COLOR_BLACK, 10);        //Black Gold
-    init_pair(54, COLOR_YELLOW, 10);       //Gold
-    init_pair(55, 11, 10);                 //Armour
-    init_pair(56, 12, 10);                 //Food
-    init_pair(57, COLOR_MAGENTA, 10);      //Elixir
+    init_pair(50, COLOR_BLACK, COLOR_MAGENTA);        //Walls
+    init_pair(51, COLOR_BLACK, COLOR_MAGENTA);        //Floor  
+    init_pair(52, COLOR_BLACK, COLOR_RED);            //Stairs
+    init_pair(53, COLOR_BLACK, COLOR_MAGENTA);        //Black Gold
+    init_pair(54, COLOR_YELLOW, COLOR_MAGENTA);       //Gold
+    init_pair(55, 11, COLOR_MAGENTA);                 //Armour
+    init_pair(56, 12, COLOR_MAGENTA);                 //Food
+    init_pair(57, COLOR_MAGENTA, COLOR_MAGENTA);      //Elixir
 
     /* Treasure Room */
     init_pair(60, COLOR_YELLOW, 10);        //Walls
@@ -715,9 +766,7 @@ void initThemes() {
 
 }
 
-short isNightmare() {
-    return match.rooms[match.level][roomFinder(match.rooms[match.level], match.pos)].type == 3;
-}
+
 
 short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
     switch (map[y][x]) {
@@ -731,15 +780,25 @@ void moveTo(short y, short x, short skip) {
     match.pos.y = y;
     match.pos.x = x;
     short night = isNightmare();
+    if (!isRoom()) {
+        match.seen[match.level][y][x] = 1;
+    }
+    else if (!night) {
+        short room = roomFinder(match.rooms[match.level], match.pos);
+        match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
+    }
     short temp = 0;
     switch (match.maps[match.level][y][x]) {
         case 9: {
             gPrompt("You found a hidden door!");
             match.maps[match.level][y][x] = 10;
         } break;
+        case 14: {
+            /*Revealing the code*/
+        } break;
         case 21: {
             gPrompt("You are caught by a trap!");
-            match.health -= match.difficulty - 1;
+            match.health -= match.difficulty + 1;
             match.maps[match.level][y][x] = 22;
         } break;
         case 25:
@@ -817,11 +876,9 @@ void moveTo(short y, short x, short skip) {
                 match.maps[match.level][y][x] = 7;
             }
         } break;
-        case 40: {
-            /*Revealing the code*/
-        } break;
+        
     }
-    printMap(match.maps[match.level], match.level);
+    printMap(match.maps[match.level], match.level, 0);
 }
 
 void fastmove(short x, short y) {
@@ -864,13 +921,14 @@ void foodMenu(short i) {
         switch (ind) {
             case 0: { 
                 clear();
-                printMap(match.maps[match.level], match.level);
+                printMap(match.maps[match.level], match.level, 0);
                 return;
             } break;
             case 1:{
                 if (match.food[0]) {
                     match.food[0]--;
                     match.hunger -= 1 + match.difficulty;
+                    match.health += 3 - match.difficulty;
                     if (match.hunger < 0) match.hunger = 0;
                     Prompt("You ate regular food!");
                     foodMenu(i);
@@ -918,7 +976,7 @@ void armMenu() {
             active = ind - 1;
         } else {
             clear();
-            printMap(match.maps[match.level], match.level);
+            printMap(match.maps[match.level], match.level, 0);
             return;
         }
     }
@@ -958,8 +1016,79 @@ void elixirMenu(short i) {
             }
         } else {
             clear();
-            printMap(match.maps[match.level], match.level);
+            printMap(match.maps[match.level], match.level, 0);
             return;
+        }
+    }
+}
+
+short checkFilename(char name[]) {
+    if (name[0] == '\0') {
+        Prompt("Filename empty!");
+        return 0;
+    }
+    if (strlen(name) > 12) {
+        Prompt("Filename must be less than 13 characters!");
+        return 0;
+    } 
+    for (short i = 0; name[i] != '\0'; i++) {
+        if(!((name[i] >= 'A' && name[i] <= 'Z') || 
+             (name[i] >= 'a' && name[i] <= 'z') ||
+             (name[i] >= '0' && name[i] <= '9') ||
+             (name[i] >= 'a' && name[i] <= 'z') ||
+             (name[i] == '_'))) {
+            Prompt("Filename must only contain \"0-9\", \"a-z\", \"A-Z\" & \"_\"!");
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void pauseMenu() {
+    initSCR();
+    
+    timer = 5;
+    char temp[40];
+    struct button butts[4];
+    strcpy(butts[0].label, "Resume...");
+    butts[0].type = 0;
+    butts[0].state = 1;
+    strcpy(butts[0].value, "1");
+    strcpy(butts[1].label, "Enter the Name to Save");
+    butts[1].type = 1;
+    butts[1].state = 0;
+    butts[1].check = *(checkFilename);
+    strcpy(butts[2].label, "Save!");
+    butts[2].type = 0;
+    butts[2].state = 0;
+    strcpy(butts[2].value, "2");
+    strcpy(butts[3].label, "Exit");
+    butts[3].type = 0;
+    butts[3].state = 0;
+    strcpy(butts[3].value, "3");
+    initInp(butts[1].value, 100);
+    short state = 1, active = 0;
+    while (state) {
+        int ind = menu(butts, 4, 1, active, "Game Paused!");
+        switch (ind) {
+            case 1:
+            case 0: {
+                clear();
+                printMap(match.maps[match.level], match.level,0);
+                return;
+            } break;
+            case 2: {
+                // saveFile(butts);
+                active = 2;
+            } break;
+            case 3: {
+                if (confirm()) {
+                    endwin();
+                    abort();
+                    printf("Thanks for playing");
+                    return;
+                }
+            }
         }
     }
 }
@@ -976,21 +1105,33 @@ short gplay() {
         if (c) {
         switch(c) {
             case ES: {
-                /*
-                    open pause menu
-                */
-               printf("Thanks for playing");
-               return 0;
-            }
+                clear();
+                pauseMenu();
+                return gplay();
+            } break;
             case 'M':
             case 'm': {
                 if (match.difficulty == 2) gPrompt("You're not a noob to cheat via seeing the map! Discover it yourself!");
                 else {
                     while (c=='M' || c=='m') {
                         c = getch();
-                        /*Show the Map*/
+                        if (c == 0) break;
+                        printMap(match.maps[match.level], match.level, 1);
                     }
+                    clear();
+                    printMap(match.maps[match.level], match.level, 0);
+
                 }
+            } break;
+            case 's':
+            case 'S': {
+                while (c=='s' || c=='S') {
+                    c = getch();
+                    if (c == 0) break;
+                    printMap(match.maps[match.level], match.level, 2);
+                }
+                clear();
+                printMap(match.maps[match.level], match.level, 0);
             } break;
             case UA:
             case 'j':
@@ -1063,7 +1204,7 @@ short gplay() {
 
                 if (match.maps[match.level][match.pos.y][match.pos.x] == 24) {
                     match.level --;
-                    gPrompt("Goind to the last floor...");
+                    gPrompt("Going to the last floor...");
                 }
                 else if (!i) gPrompt("No stairs here so far!");
                 if (!i) j = 1;
@@ -1081,7 +1222,11 @@ short gplay() {
                         // while (1) {}
                         return 0;
                     }
+                    short room = roomFinder(match.rooms[match.level], match.pos);
+                    match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
+
                     gPrompt("Going to the next floor...");
+
                 }
                 else if (!i) gPrompt("No stairs here so far!");
             } break;
@@ -1110,7 +1255,7 @@ short gplay() {
         }
         if (c==27) {endwin(); break;}
         if (c) prev = c;
-        printMap(match.maps[match.level], match.level);
+        printMap(match.maps[match.level], match.level, 0);
     }
 }
 

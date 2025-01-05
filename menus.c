@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:0.6.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:0.7.0*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,6 +6,7 @@
 #include <ncurses.h>
 #include <time.h>
 #include <unistd.h>
+#include <locale.h>
 #include "track.c"
 
 
@@ -97,6 +98,7 @@ typedef struct {
     pair tl;
     pair br;
     door doors[3];
+    short pass;
     short nei[11];
     short neiC;
 } room;
@@ -210,6 +212,28 @@ void initSCR() {
     init_pair(103, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(104, COLOR_BLUE, COLOR_BLACK);
     init_pair(105, COLOR_CYAN, COLOR_BLACK);
+}
+
+
+short confirm() {
+    Prompt("Are you sure of this action? Y/n");
+    while (1) {
+        usleep(DELAY);
+        endTime();
+        char c = getch();
+        if (c) {
+            switch(c) {
+                case ES:
+                case 'n': {
+                    return 0;
+                } break;
+                case 'Y': {
+                    return 1;
+                } break;
+            }
+        }
+        usleep(DELAY);
+    }
 }
 
 short click() {

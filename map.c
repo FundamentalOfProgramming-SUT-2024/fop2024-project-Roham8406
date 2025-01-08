@@ -1,27 +1,110 @@
-/* ver: 0.2.1 */
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <time.h>
+/* ver: 0.8.0 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <locale.h>
+#include "inits.c"
+#include "track.c"
+// #include "menus.c"
 #include <math.h>
-// #include <unistd.h>
-// #include <ncurses.h>
-#include "menus.c"
 
 
+#define MUSICS 4
 
-
-// #define UA 3
-// #define DA 2
-// #define LA 4
-// #define RA 5
-// #define ES 27
-// #define BS 7 
+#define MAXx 150
+#define MAXy 40
+#define ax 2
+#define bx 1
+#define ay 1
+#define by 2
 
 // #define init_color(a,b,c,d) init_color(a,b*4,c*4,d*4)
 
+void Ranking();
+
+typedef struct {
+    short x;
+    short y;
+} pair;
+
+struct gamer {
+    short anonymous;
+    char username[10];
+};
+
+struct gamers {
+    char username[30];
+    int points;
+    int golds;
+    short matches;
+    short time;
+};
+
+typedef struct {
+    short state;
+    short type;
+    /*
+    0
+    1 Normal
+    2 Hidden
+    3 Known Hiddedn
+    4 Locked
+    5 Unlocked
+    */
+    short room;
+    pair pos;
+    short end;
+} door;
+
+typedef struct {
+    short state;
+    short type;
+    /*
+    0 No Room
+    1 Normal
+    2 Enchant
+    3 Nightmare
+    4 Treasure
+    */
+    pair tl;
+    pair br;
+    door doors[3];
+    short pass;
+    short nei[11];
+    short neiC;
+    short lockDT;
+    short pwd;
+    short mirror;
+    short lockState;
+} room;
 
 
+struct game {
+    short colour;
+    short difficulty;
+    short music;
+    char maps[4][MAXy][MAXx];
+    char seen[4][MAXy][MAXx];
+    room rooms[5][12];
+    short level;
+    pair pos;
+    short health;
+    short hunger;
+    short food[4];
+    short gold;
+    short arm[5];
+    short equArm;
+    short elixir[3];
+    short key;
+    short brKey;
+};
+
+struct gamer player;
+struct game match;
+struct track tracks[MUSICS];
+time_t seen;
 
 
 
@@ -441,7 +524,6 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         short gold = 3 + 2*match.difficulty;
         short armo = 3 + 3*match.difficulty;
         short elix = 5 + 2*match.difficulty;
-        short aKey = 7 + 2*match.difficulty;
 
         short y = rooms[i].tl.x + 1;
         short x = rooms[i].tl.y + 1;
@@ -544,16 +626,18 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             }
 
         }
-        if (rand() % aKey == 0) map[x + rand() % length][y + rand() % width] = 39;
 
         
     }
+    short i = rand() % k;
+    map[rooms[i].tl.y + 1 + rand() % (rooms[i].br.y-3-rooms[i].tl.y)][rooms[i].tl.x +1+ rand() % (rooms[i].br.x-3-rooms[i].tl.x)] = 39;
     
     if (level) map[stair->y][stair->x] = 24;
     short r;
+    short exe = 40;
     do {r = (level == 4) ? 5 : rand() % k;}
     while(0);
-    // while (isIn(rooms[k].tl, *stair, rooms[k].br) && rooms[k].type != 4); /* Sometimes falls in infinite loop */
+    // while (isIn(rooms[k].tl, *stair, rooms[k].br) && rooms[k].type != 4 && exe--); /* Sometimes falls in infinite loop */
     stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
     stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);
     map[stair->y][stair->x] = 23;
@@ -567,6 +651,27 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
                 case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
                 case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
             }
+            rooms[i].pwd = rand() % 1000;
+            rooms[i].mirror = rand()%3 ? 1 : 0;
+            rooms[i].lockState = 0;
+            if (level < 3 || rand()%(5-match.difficulty)) {
+                if (rand() % (4-match.difficulty)) rooms[i].lockDT = 1;
+                else {
+                    rooms[i].lockDT = 10 + rand() % 30;
+                }
+            } else {
+                int k;
+                do {k = rand() % 4;} while (k == j);
+                switch (k) {
+                    case 0: map[rooms[i].tl.y+1][rooms[i].tl.x+1] = 14; break;
+                    case 1: map[rooms[i].tl.y+1][rooms[i].br.x-1] = 14; break;
+                    case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
+                    case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
+                }
+                rooms[i].lockDT =  2;
+            }
+        } else {
+            rooms[i].lockDT = 0;
         }
     }
         
@@ -763,7 +868,174 @@ void initThemes() {
     init_pair(85, COLOR_WHITE, 10);
     
 
+    /* Locked Door */
+    init_pair(90, COLOR_BLACK, COLOR_GREEN);
+    init_pair(91, COLOR_BLACK, COLOR_YELLOW);
+    init_pair(92, COLOR_BLACK, COLOR_RED);
 
+
+}
+
+void revealCode(short pass, short mir) {
+    char pwd[5];
+    short counter = (1-mir)*3;
+    mir = mir*2 - 1;
+    while (counter >= 0 && counter <= 3) {
+        pwd[counter] = pass%10 + '0';
+        pass /= 10;
+        counter += mir;
+    }
+    pwd[5] = 0;
+    char message[30] = "Password of the lock is ";
+    strcat(message, pwd);
+    gPrompt(message);
+    gtimer = 30;
+}
+
+void printpwd(short state, char nums[4], short counter) {
+    attron(COLOR_PAIR(90+state));
+    for (short i = MAXy*0.2; i < MAXy * 0.8; i++) {
+        for (short j = MAXx*0.2; j < MAXx * 0.8; j++) {
+            mvprintw(i, j, " ");
+        }
+    }
+    float is[4] = {0.33, 0.36, 0.7, 0.73};
+    for (short i = 0; i < 4; i++) {
+        if (counter == i) {
+            mvprintw(MAXy*0.35-2, MAXx*is[i], "+");
+            mvprintw(MAXy*0.35+2, MAXx*is[i], "-");
+            attron(A_BLINK);
+            attron(A_STANDOUT);
+        }
+        mvprintw(MAXy*0.35, MAXx*is[i], "%d", nums[i]);
+        attroff(A_BLINK);
+        attroff(A_STANDOUT);
+    }
+    if (counter == 4) {
+        attron(A_BLINK);
+        attron(A_STANDOUT);
+    }
+    char keyhole[20][25] = {
+        "       _________",
+        "      /         \\",
+        "     /           \\",
+        "    /   _______   \\",
+        "   /   /       \\   \\",
+        "  |   |  () ()  |   |",
+        "  |   |   (_)   |   |",
+        "  |   |  () ()  |   |",
+        "  |    \\_______/    |",
+        "   \\___  ___  _____/",
+        "       \\/_ _\\/",
+        "       /     \\",
+        "      /_______\\",
+        "     /         \\",
+        "    /___________\\",
+        "   |#############|",
+        "   |#############|",
+        "    \\_______ ____/"
+    };
+    for (short i = 0; i < 20; i++) {
+    
+        mvprintw(MAXy*0.3 + i, MAXx/2 - 10, "%s", keyhole[i]);
+        
+    }
+    attroff(A_BLINK);
+    attroff(A_STANDOUT);
+}
+
+short pwd(short state, short counter) {
+    char nums[4];
+    for (short i = 0; i < 4; i++) nums[i] = 0;
+    while (1) {
+        printpwd(state, nums, counter);
+        char c = getch();
+        if (c) {
+            if (c >= '0' && c <= '9' && counter != 4) {
+                nums[counter] = c - '0';
+                counter ++;
+                continue;
+            }
+            switch (c) {
+                case ES: case BS: return -1;
+                case LA: counter = counter == 0 ? 4 : counter - 1; break;
+                case '\n':
+                case ' ': {
+                    if (counter == 4) {
+                        short sum = 0;
+                        char a[10];
+    sprintf(a,"%c %c %c %c", nums[0], nums[1], nums[2], nums[3]);
+    gPrompt(a);
+                        for (short i = 0; i < 4; i++) {                        
+                            sum *= 10;
+                            sum += nums[i]-'0';
+                        }
+                        return sum;
+                    }
+                }
+                case RA: counter = counter == 4 ? 0 : counter + 1; break;
+                case UA: {
+                    if (counter == 4) counter = 0;
+                    else {
+                        nums[counter]++;
+                        nums[counter]%=10;
+                    }
+                } break;
+                case DA: {
+                    if (counter == 4) counter = 0;
+                    else {
+                        nums[counter]--;
+                        nums[counter]+=10;
+                        nums[counter]%=10;
+                    }
+                } break;
+                case 'k': {
+                    if (match.key) {
+                        if (rand()%10) {
+                            gPrompt("You used an ancient key!");
+                            match.key --;
+                            return -2;
+                        } else {
+                            gPrompt("You broke the key, loser...");
+                            match.key --;
+                            match.brKey ++;
+                        }
+                    } else {
+                        gPrompt("No ancient keys avaible!");
+                    }
+                }
+            }
+        }
+    }
+}
+
+void securityEnabled(room *r) {
+    r->lockState = 0;
+} 
+
+short openPwd(room *r) {
+    if (r->lockState == 3) {
+        securityEnabled(r);
+        return 0;
+    }
+    short res = pwd(r->lockState, 0);
+    
+    if (res == -2) {
+        r->lockDT = 0;
+        return 1;
+    }
+    if (res == -1) return 0;
+    if (res == r->pwd) {
+        if (r->lockDT == 2) {
+            r->lockDT = 1;
+            r->pwd = rand() % 1000;
+            return 0;
+        }
+        r->lockDT = 0;
+        return 1;
+    }
+    (r->lockState)++;
+    openPwd(r);
 }
 
 
@@ -771,7 +1043,14 @@ void initThemes() {
 short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
     switch (map[y][x]) {
         case  0: case  1: case  2: case  3: case  4: case  5: case  6: case 20: return 0;
-        case 11: return map[cy][cx] == 13;
+        case 11: {
+            if (map[cy][cx] == 13) return 1;
+            if (openPwd(&(match.rooms[match.level][roomFinder(match.rooms[match.level], match.pos)]))) {
+                map[y][x] = 12;
+                return 1;
+            }
+            return 0;
+        } break;
         default: return 1; 
     }
 }
@@ -794,7 +1073,20 @@ void moveTo(short y, short x, short skip) {
             match.maps[match.level][y][x] = 10;
         } break;
         case 14: {
-            /*Revealing the code*/
+            short r = roomFinder(match.rooms[match.level], match.pos);
+            short mir = match.rooms[match.level][r].mirror;
+            short type = match.rooms[match.level][r].lockDT;
+            switch (type) {
+                case 0: {} break;
+                case 1: 
+                case 2: revealCode(match.rooms[match.level][r].pwd, mir); break;
+                default: {
+                    time_t n = time(NULL);
+                    if (seen - n > type) match.rooms[match.level][r].pwd = rand() % 1000;
+                    seen = n;
+                    revealCode(match.rooms[match.level][r].pwd, mir);
+                }
+            }
         } break;
         case 21: {
             gPrompt("You are caught by a trap!");
@@ -1044,6 +1336,34 @@ short checkFilename(char name[]) {
     return 1;
 }
 
+void saveFile(char name[]) {
+    if (checkFilename(name)) {
+        char dir[40];
+        sprintf(dir, "games_saved/%s$%s.bin", player.username, name);
+        FILE *fptr = fopen(dir, "wb");
+        if (!fptr) {
+            Prompt("Error aqquired while saving the game, please change the filename!");
+            fclose(fptr);
+            return;
+        }
+        else if (fwrite(&match, sizeof(struct game), 1, fptr)) {
+            FILE *log = fopen("games_saved/games.txt", "a");
+            char line[50];
+            sprintf(line, "%s %s", player.username, name);
+            if (fprintf(log, "\n%s %s", player.username, name)) {
+                Prompt("Game saved successfully!");
+                fclose(log);
+                fclose(fptr);
+                return;
+            }
+            fclose(log);
+        }
+        fclose(fptr);
+        Prompt("Unknown Error; play a bit longer and retry!");
+        
+    }
+}
+
 void pauseMenu() {
     initSCR();
     
@@ -1054,22 +1374,27 @@ void pauseMenu() {
     butts[0].type = 0;
     butts[0].state = 1;
     strcpy(butts[0].value, "1");
-    strcpy(butts[1].label, "Enter the Name to Save");
-    butts[1].type = 1;
-    butts[1].state = 0;
-    butts[1].check = *(checkFilename);
-    strcpy(butts[2].label, "Save!");
-    butts[2].type = 0;
-    butts[2].state = 0;
-    strcpy(butts[2].value, "2");
-    strcpy(butts[3].label, "Exit");
-    butts[3].type = 0;
-    butts[3].state = 0;
-    strcpy(butts[3].value, "3");
-    initInp(butts[1].value, 100);
+    short i = 1;
+    if (!player.anonymous) {
+        strcpy(butts[1].label, "Enter the Name to Save");
+        butts[1].type = 1;
+        butts[1].state = 0;
+        butts[1].check = *(checkFilename);
+        strcpy(butts[2].label, "Save!");
+        butts[2].type = 0;
+        butts[2].state = 0;
+        strcpy(butts[2].value, "2");
+        i = 3;
+        initInp(butts[1].value, 100);
+    }
+    strcpy(butts[i].label, "Exit");
+    butts[i].type = 0;
+    butts[i].state = 0;
+    strcpy(butts[i].value, "3");
+    
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 4, 1, active, "Game Paused!");
+        int ind = menu(butts, i+1, 1, active, "Game Paused!");
         switch (ind) {
             case 1:
             case 0: {
@@ -1078,7 +1403,7 @@ void pauseMenu() {
                 return;
             } break;
             case 2: {
-                // saveFile(butts);
+                saveFile(butts[1].value);
                 active = 2;
             } break;
             case 3: {
@@ -1090,6 +1415,68 @@ void pauseMenu() {
                 }
             }
         }
+    }
+}
+int calcPoint() {
+    return match.gold;
+}
+void endGame() {
+    if (player.anonymous) {
+
+    } else {
+        FILE *fptr, *temp;
+        fptr = fopen("data/users.txt", "r");
+        temp = fopen("data/temp.txt", "w");
+        char username[30], email[30], password[30];
+        int points, golds;
+        unsigned long long time;
+        short matches, i = 0;
+        char line[200], user[20];
+        fgets(line, 200, fptr);
+        fputs(line, temp);
+        while (fgets(line, 200, fptr)) {
+            i++;
+            if (line[0] == '\0') continue;
+            sscanf(line, "%s %s %s %d %d %hd %llu", username, email, password, &points, &golds, &matches, &time);
+            if (strcmp(player.username, username) == 0) {
+                points += calcPoint();
+                golds += match.gold;
+                matches++;
+                sprintf(line, "%s %s %s %d %d %hd %llu\n", username, email, password, points, golds, matches, time);
+            }
+            fputs(line, temp);
+        }
+        fclose(fptr);
+        fclose(temp);
+        
+
+        endwin();
+        initSCR();
+        char c;
+        short x, y;
+        getmaxyx(stdscr, y, x);
+        sprintf(line, "Thanks for playing! The game is ended, press Space to see the ranking!");
+        mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+        
+        
+        fptr = fopen("data/users.txt", "w");
+        temp = fopen("data/temp.txt", "r");
+        while (fgets(line, 200, temp)) {
+            fputs(line, fptr);
+        }
+        fclose(temp);
+        fclose(fptr);
+        while (1) {
+            c = getch();
+            if (c == ' ') {
+                clear();
+                endwin();
+                Ranking();
+                return;
+            }
+        }
+        /*Doesn't save properly*/
+        
     }
 }
 
@@ -1216,9 +1603,7 @@ short gplay() {
                     if (match.level == 4) {
                         clear();
                         // endwin();
-                        mvprintw(1,1,"g%d f%d a%d a%d a%d a%d a%d e%d e%d e%d h%d k%d", match.gold, match.food[0], match.arm[0],
-                        match.arm[1], match.arm[2], match.arm[3], match.arm[4], match.elixir[0],
-                        match.elixir[1], match.elixir[2], match.health, match.key);
+                        endGame();
                         // while (1) {}
                         return 0;
                     }
@@ -1260,18 +1645,15 @@ short gplay() {
 }
 
 
-int main() {
-    srand(time(NULL));
-    mapCreator();
-
-    initscr();
-    curs_set(FALSE);
-    keypad(stdscr, TRUE);
-    noecho();
-
-    start_color();
+void setNewGame() {
+    Prompt("Initializing Map...");
+    sleep(2);
+    clear();
     initThemes();   
+
+    mapCreator();
+    match.seen[match.level][match.pos.y][match.pos.x] = 1;
+    printMap(match.maps[match.level], match.level, 0);
     gplay();
 
-    return 0;
 }

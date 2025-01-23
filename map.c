@@ -1,4 +1,4 @@
-/* ver: 0.8.0 */
+/* ver: 1.1.0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +42,7 @@ struct gamers {
     short time;
 };
 
+
 typedef struct {
     short state;
     short type;
@@ -80,6 +81,34 @@ typedef struct {
     short lockState;
 } room;
 
+typedef struct monster {
+    short type;
+    /*
+        0: None;
+        1: Deamon
+        2: FBD
+        3: Giant
+        4: Snake
+        5: Undeed
+    */
+    short level;
+    short room;
+    pair pos;
+    short state;
+    short health;
+} monster;
+
+typedef struct food {
+    short type;
+    /*
+    0 No Food;
+    1 Simple
+    2 Excel
+    3 Magical
+    4: Rotten
+    */
+   short state;
+} food;
 
 struct game {
     short colour;
@@ -92,22 +121,22 @@ struct game {
     pair pos;
     short health;
     short hunger;
-    short food[4];
+    food foods[5];
     short gold;
     short arm[5];
     short equArm;
     short elixir[3];
     short key;
     short brKey;
+    monster mons[154];
+    short monss;
 };
+
 
 struct gamer player;
 struct game match;
 struct track tracks[MUSICS];
 time_t seen;
-
-
-
 
 
 
@@ -145,6 +174,12 @@ typedef struct {
     37 Speed Elixir
     38 Damage Elixir
     39 Ancient Key
+    40 Deamen
+    41 FBD
+    42 Giant
+    43 Snake
+    44 Undeed
+    45 Treasure
     */
 } obj;
 
@@ -376,6 +411,72 @@ short doorFinder(door doors[36], short ind, room rooms[12], char main[MAXy][MAXx
     }
     return 0;
 }
+short checkDeamon(char map[MAXy][MAXx], short y, short x)  {
+    
+}
+short checkFBM(char map[MAXy][MAXx], short y, short x)  {
+    
+}
+short checkGiant(char map[MAXy][MAXx], short y, short x)  {
+    
+}
+short checkSnake(char map[MAXy][MAXx], short y, short x)  {
+    
+}
+short checkUndeed(char map[MAXy][MAXx], short y, short x)  {
+    
+}
+
+void addMonster(short level, room rooms[12], short i, char map[MAXy][MAXx]) {
+    short y = rooms[i].tl.x + 1;
+    short x = rooms[i].tl.y + 1;
+    short width = (rooms[i].br.x - rooms[i].tl.x - 1);
+    short length  = (rooms[i].br.y - rooms[i].tl.y - 1);
+    match.mons[match.monss].level = level;
+    match.mons[match.monss].room = i;
+    match.mons[match.monss].state = -1;
+    match.mons[match.monss].pos.x = x + rand() % length;
+    match.mons[match.monss].pos.y = y + rand() % width;
+    short num, health, type;
+    switch(rand()%10) {
+        case 0:
+        case 1:
+        case 2: {
+            type = 1;
+            num = 40;
+            health = 5;
+        } break;
+        case 3:
+        case 4:
+        case 5: {
+            type = 2;
+            num = 41;
+            health = 10;
+        } break;
+        case 6:
+        case 7: {
+            type = 3;
+            health = 15;
+            num = 42;
+        } break;
+        case 8: {
+            health = 20;
+            type = 4;
+            num = 43;
+        } break;
+        case 9: {
+            health = 30;
+            type = 5;
+            num = 44;
+        }
+    }
+    map[match.mons[match.monss].pos.x][match.mons[match.monss].pos.y] = num;
+    match.mons[match.monss].health = health;
+    match.mons[match.monss].type = type;
+    match.monss++;
+    // short (*func[5])(char**, short, short) = {&checkDeamon, &checkFBM, &checkGiant, &checkSnake, &checkUndeed};
+    // match.mons[match.monss].func = func[match.mons[match.monss].type];
+}
 
 int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *first, pair *stair, char map2[MAXy][MAXx]) {
     
@@ -509,6 +610,7 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         short gold = 3 + 2*match.difficulty;
         short armo = 3 + 3*match.difficulty;
         short elix = 5 + 2*match.difficulty;
+        short mons = 9 - 2*match.difficulty;
 
         short y = rooms[i].tl.x + 1;
         short x = rooms[i].tl.y + 1;
@@ -524,7 +626,11 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
         }
         if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
-        if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
+        if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
+        if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
+        if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+
+
         if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
         if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
         if (rooms[i].type == 4) {
@@ -609,9 +715,12 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
                 }
                 map[x + rand() % length][y + rand() % width] = sym;
             }
-
         }
-
+        if (rooms[i].type != 2) {
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+        }
         
     }
     short i = rand() % k;
@@ -732,18 +841,23 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 25:
                     case 26:
                     case 27:
-                    case 28: ch = 'F'; cr = 6; break;
-                    case 29: ch = 'G'; cr = 4; break;
+                    case 28: ch = 'f'; cr = 6; break;
+                    case 29: ch = 'g'; cr = 4; break;
                     case 30: ch = 'B'; cr = 3; break;
                     case 31: ch = 'M'; cr = 5; break;
-                    case 32: ch = 'D'; cr = 5; break;
+                    case 32: ch = 'd'; cr = 5; break;
                     case 33: ch = 'W'; cr = 5; break;
                     case 34: ch = 'A'; cr = 5; break;
-                    case 35: ch = 'S'; cr = 5; break;
+                    case 35: ch = 's'; cr = 5; break;
                     case 36: ch = 'H'; cr = 7; break;
                     case 37: ch = 'X'; cr = 7; break;
                     case 38: ch = 'E'; cr = 7; break;
                     case 39: ch = 'K'; cr = 5; break;
+                    case 40: ch = 'D'; cr = 8; break;
+                    case 41: ch = 'F'; cr = 8; break;
+                    case 42: ch = 'G'; cr = 8; break;
+                    case 43: ch = 'S'; cr = 8; break;
+                    case 44: ch = 'U'; cr = 8; break;
 
                     defualt: ch = ' '; cr2 = 26; break;
 
@@ -776,6 +890,16 @@ void mapCreator() {
     match.pos.x = first.tl.x + 1;
     match.pos.y = first.tl.y + 1;
     match.level = 0;
+    for (short i = 0; i < 5; i++) match.arm[i] = 0;
+    for (short i = 0; i < 3; i++) match.elixir[i] = 0;
+    for (short i = 0; i < 5; i++) match.foods[i].type = 0;
+    match.arm[0] = 1;
+    match.brKey = 0;
+    match.equArm = 0;
+    match.gold = 0;
+    match.health = 100;
+    match.hunger = 0;
+    match.key = 0;
     
     for (short i = 0; i < 4; i++) {
         for (short j = 0; j < col; j++) {
@@ -785,8 +909,6 @@ void mapCreator() {
         }
         floorRandomizer(match.rooms[i], match.maps[i], i + 1, &first, &stair, match.seen[i]);
     }
-    match.health = 100;
-    match.hunger = 0;
     printMap(match.maps[match.level], match.level, 0);
     return;
 }
@@ -817,6 +939,7 @@ void initThemes() {
     init_pair(35, 11, 10);                   //Armour
     init_pair(36, 12, 10);                   //Food
     init_pair(37, COLOR_MAGENTA, 10);        //Elixir
+    init_pair(38, COLOR_WHITE, 10);          //Monster
 
     /* Enchanted Rooms */
     init_pair(40, COLOR_MAGENTA, 10);        //Walls
@@ -827,6 +950,7 @@ void initThemes() {
     init_pair(45, 11, 10);                   //Armour
     init_pair(46, 12, 10);                   //Food
     init_pair(47, COLOR_MAGENTA, 10);        //Elixir
+    init_pair(48, COLOR_WHITE, 10);          //Monster
 
     /* Nightmare Rooms */
     init_pair(50, COLOR_BLACK, COLOR_MAGENTA);        //Walls
@@ -837,6 +961,7 @@ void initThemes() {
     init_pair(55, 11, COLOR_MAGENTA);                 //Armour
     init_pair(56, 12, COLOR_MAGENTA);                 //Food
     init_pair(57, COLOR_MAGENTA, COLOR_MAGENTA);      //Elixir
+    init_pair(58, COLOR_WHITE, COLOR_MAGENTA);        //Monster
 
     /* Treasure Room */
     init_pair(60, COLOR_YELLOW, 10);        //Walls
@@ -847,6 +972,7 @@ void initThemes() {
     init_pair(65, 11, 10);                   //Armour
     init_pair(66, 12, 10);                   //Food
     init_pair(67, COLOR_MAGENTA, 10);        //Elixir
+    init_pair(68, COLOR_WHITE, 10);          //Monster
 
     /* HERO */
     init_pair(80, COLOR_RED, 10);
@@ -1050,6 +1176,34 @@ short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
     }
 }
 
+void moveMonstors() {
+    // for (short i = 0; i < match.monss; i++) {
+    //     if (match.mons[i].type != 0) {
+    //         if (match.mons[i].level == match.level) {
+    //             if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
+    //                 if (match.mons[i].type != 4) {
+    //                     match.mons[i].state = -1;
+    //                 }
+    //             } else {
+    //                 if (match.mons[i].state == -1) {
+    //                     switch(match.mons[i].type) {
+    //                         case 1:
+    //                         case 2:
+    //                         case 4:
+    //                             match.mons[i].state = -2;
+    //                             break;
+    //                         case 3:
+    //                         case 5:
+    //                             match.mons[i].state = 5;
+    //                     }
+    //                 }
+    //                 match.mo
+    //             }
+    //         }
+    //     }
+    // }
+}
+
 void moveTo(short y, short x, short skip) {
     if (match.hunger < 30) match.health ++;
     match.hunger ++;
@@ -1098,16 +1252,23 @@ void moveTo(short y, short x, short skip) {
         case 27:
         case 28: {
             if (!skip) {
-                short sum = 0;
-                for (short i=0; i < 4; i++) sum += match.food[i];
-                if (sum >= 5) gPrompt("You can't pick any more food, please eat the rest, first.");
-                else {
-                    if(night) gPrompt("HAHAHAHA! I'm seeing a nightmare, a nightmare I could not bear!");
-                    else {
-                        match.food[match.maps[match.level][y][x] - 25]++;
-                        gPrompt("You picked the food up.");
+                short state = 1;
+                for (short i = 0; i < 5; i++) {
+                    if (!match.foods[i].type) {
+                        if(night) gPrompt("HAHAHAHA! I'm seeing a nightmare, a nightmare I could not bear!");
+                        else {
+                            // match.foods[i].type = 10;
+                            match.foods[i].type = match.maps[match.level][y][x] - 24;
+                            match.foods[i].state = 60;
+                            gPrompt("You picked the food up.");
+                        }
+                        match.maps[match.level][y][x] = 7;
+                        state = 0;
+                        break;
                     }
-                    match.maps[match.level][y][x] = 7;
+                }
+                if (state) {
+                    gPrompt("You can't pick any more food, please eat the rest, first.");
                 }
             }
         } break;
@@ -1169,6 +1330,7 @@ void moveTo(short y, short x, short skip) {
             }
         } break;
     }
+    moveMonsters();
     printMap(match.maps[match.level], match.level, 0);
 }
 
@@ -1187,17 +1349,19 @@ void fastmove(short x, short y) {
         if (state) moveTo(match.pos.y + y, match.pos.x + x, 0);
     }
 }
+void strengthen() {}
+void fasten() {}
 
 void foodMenu(short i) {
     initSCR();
     
     timer = 5;
     char temp[20];
-    char li[4][10] = {"Regular", "Excellent", "Magical", "Rotten"};
-    struct button butts[4];
+    char li[5][10] = {"No", "Regular", "Excellent", "Magical", "Regular"};
+    struct button butts[5];
     
-    for (short i = 0; i < 4; i++) {
-        sprintf(temp, "%s Food: %hd", li[i], match.food[i]);
+    for (short i = 0; i < 5; i++) {
+        sprintf(temp, "%s Food", li[match.foods[i].type]);
         butts[i].type = 0;
         strcpy(butts[i].label, temp);
         sprintf(temp, "%hd", i+1);
@@ -1208,28 +1372,57 @@ void foodMenu(short i) {
     
     short state = 1, active = i;
     while (state) {
-        int ind = menu(butts, 4, 1, active, "Choose food to eat!");
+        int ind = menu(butts, 5, 1, active, "Choose food to eat!");
         switch (ind) {
             case 0: { 
                 clear();
                 printMap(match.maps[match.level], match.level, 0);
                 return;
             } break;
-            case 1:{
-                if (match.food[0]) {
-                    match.food[0]--;
-                    match.hunger -= 1 + match.difficulty;
-                    match.health += 3 - match.difficulty;
-                    if (match.hunger < 0) match.hunger = 0;
-                    Prompt("You ate regular food!");
-                    foodMenu(i);
-                    clear();
-                    return;
-                } else {
-                    Prompt("You have no regular food to eat!");
+            // case 1:{
+            //     if (match.food[0]) {
+            //         match.food[0]--;
+            //         match.hunger -= 1 + match.difficulty;
+            //         match.health += 3 - match.difficulty;
+            //         if (match.hunger < 0) match.hunger = 0;
+            //         Prompt("You ate regular food!");
+            //         foodMenu(i);
+            //         clear();
+            //         return;
+            //     } else {
+            //         Prompt("You have no regular food to eat!");
+            //     }
+            // } break;
+            default: { 
+                switch (match.foods[ind-1].type) {
+                    case 0:
+                        Prompt("No food here!");
+                        break;
+                    case 1: {
+                        match.foods[ind-1].type = 0;
+                        match.health += 30;
+                        Prompt("You ate a Regular Food!");
+                    } break;
+                    case 2: {
+                        match.foods[ind-1].type = 0;
+                        match.health += 30;
+                        strengthen();
+                        Prompt("You ate an Excellent Food!");
+                    } break;
+                    case 3: {
+                        match.foods[ind-1].type = 0;
+                        match.health += 30;
+                        fasten();
+                        Prompt("You ate a Magical Food!");
+                    } break;
+                    case 4: {
+                        match.foods[ind-1].type = 0;
+                        match.health -= 10;
+                        Prompt("Ewe... that food was rotten");
+                    } break;
                 }
-            } break;
-            /* Other food is not available in this phase*/
+                strcpy(butts[ind-1].label, "No Food");
+            }
         }
         active = ind - 1;
     }
@@ -1654,6 +1847,8 @@ void setNewGame() {
     mapCreator();
     short r = roomFinder(match.rooms[0], match.pos);
     match.seen[0][match.rooms[0][r].tl.y][match.rooms[0][r].tl.x] = 1;
+
+
     printMap(match.maps[match.level], match.level, 0);
     gplay();
 

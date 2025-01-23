@@ -1605,7 +1605,7 @@ short gplay() {
                     if (j) {}
                     else if (match.maps[match.level][match.pos.y][match.pos.x] == 23) {
                         match.level ++;
-                        if (match.level == 5) {
+                        if (match.level == 4) {
                             clear();
                             // endwin();
                             endGame();

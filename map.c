@@ -1,4 +1,4 @@
-/* ver: 1.1.0 */
+/* ver: 1.2.0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,6 +96,7 @@ typedef struct monster {
     pair pos;
     short state;
     short health;
+    short seen;
 } monster;
 
 typedef struct food {
@@ -427,14 +428,23 @@ short checkUndeed(char map[MAXy][MAXx], short y, short x)  {
     
 }
 
+void monsAttack(short type) {
+    match.health -= type*5 + 5;
+    char li[5][30] = {"Deamon", "Fire Breathing Monstor", "Giant", "Snake", "Undeed"};
+    char temp[65];
+    sprintf(temp, "You Are Being Attacked By The %s!", li[type-1]);
+    gPrompt(temp);
+}
+
 void addMonster(short level, room rooms[12], short i, char map[MAXy][MAXx]) {
-    short y = rooms[i].tl.x + 1;
-    short x = rooms[i].tl.y + 1;
-    short width = (rooms[i].br.x - rooms[i].tl.x - 1);
-    short length  = (rooms[i].br.y - rooms[i].tl.y - 1);
+    short x = rooms[i].tl.x + 1;
+    short y = rooms[i].tl.y + 1;
+    short length = (rooms[i].br.x - rooms[i].tl.x - 1);
+    short width  = (rooms[i].br.y - rooms[i].tl.y - 1);
     match.mons[match.monss].level = level;
     match.mons[match.monss].room = i;
     match.mons[match.monss].state = -1;
+    match.mons[match.monss].seen = 0;
     match.mons[match.monss].pos.x = x + rand() % length;
     match.mons[match.monss].pos.y = y + rand() % width;
     short num, health, type;
@@ -470,7 +480,7 @@ void addMonster(short level, room rooms[12], short i, char map[MAXy][MAXx]) {
             num = 44;
         }
     }
-    map[match.mons[match.monss].pos.x][match.mons[match.monss].pos.y] = num;
+    // map[match.mons[match.monss].pos.x][match.mons[match.monss].pos.y] = num;
     match.mons[match.monss].health = health;
     match.mons[match.monss].type = type;
     match.monss++;
@@ -610,7 +620,7 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         short gold = 3 + 2*match.difficulty;
         short armo = 3 + 3*match.difficulty;
         short elix = 5 + 2*match.difficulty;
-        short mons = 9 - 2*match.difficulty;
+        short mons = 5 - match.difficulty;
 
         short y = rooms[i].tl.x + 1;
         short x = rooms[i].tl.y + 1;
@@ -793,9 +803,9 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
             short reveal = cheat == 1;
-            int ch, cr, cr2 = -1, type;
+            int ch, cr, cr2 = -1;
             pair temp = {j, i};
-            type = roomFinder(match.rooms[level], temp);
+            int type = roomFinder(match.rooms[level], temp);
             
             if (type != -1) type = match.rooms[level][type].type;
 
@@ -853,11 +863,11 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 37: ch = 'X'; cr = 7; break;
                     case 38: ch = 'E'; cr = 7; break;
                     case 39: ch = 'K'; cr = 5; break;
-                    case 40: ch = 'D'; cr = 8; break;
-                    case 41: ch = 'F'; cr = 8; break;
-                    case 42: ch = 'G'; cr = 8; break;
-                    case 43: ch = 'S'; cr = 8; break;
-                    case 44: ch = 'U'; cr = 8; break;
+                    // case 40: ch = 'D'; cr = 8; break;
+                    // case 41: ch = 'F'; cr = 8; break;
+                    // case 42: ch = 'G'; cr = 8; break;
+                    // case 43: ch = 'S'; cr = 8; break;
+                    // case 44: ch = 'U'; cr = 8; break;
 
                     defualt: ch = ' '; cr2 = 26; break;
 
@@ -876,7 +886,17 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     attron(COLOR_PAIR(80 + match.colour));
     mvprintw(2+match.pos.y, match.pos.x, "!");
     attroff(A_BOLD);
-
+    pair node = {match.pos.x, match.pos.y};
+    short roomIn = roomFinder(match.rooms[level], node);
+    attron(COLOR_PAIR(3));
+    for (short i = 0; i < match.monss; i++) {
+        if (match.mons[i].type != 0 && match.mons[i].seen == 1 &&
+            match.mons[i].level == match.level + 1) {
+            char sym[6] = "DFGSU";
+            mvprintw(2+match.mons[i].pos.y, match.mons[i].pos.x, "%c", sym[match.mons[i].type-1]);
+        }
+    }
+    attroff(COLOR_PAIR(3));
 }
 
 void mapCreator() {
@@ -1172,36 +1192,91 @@ short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
             }
             return 0;
         } break;
-        default: return 1; 
+        default: {
+            for (short i = 0; i < match.monss; i++) {
+                if (match.level + 1 == match.mons[i].level &&
+                    y == match.mons[i].pos.y &&
+                    x == match.mons[i].pos.x &&
+                    match.mons[i].type !=  0) return 0;
+            }
+            return 1; 
+        }
     }
 }
 
-void moveMonstors() {
-    // for (short i = 0; i < match.monss; i++) {
-    //     if (match.mons[i].type != 0) {
-    //         if (match.mons[i].level == match.level) {
-    //             if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
-    //                 if (match.mons[i].type != 4) {
-    //                     match.mons[i].state = -1;
-    //                 }
-    //             } else {
-    //                 if (match.mons[i].state == -1) {
-    //                     switch(match.mons[i].type) {
-    //                         case 1:
-    //                         case 2:
-    //                         case 4:
-    //                             match.mons[i].state = -2;
-    //                             break;
-    //                         case 3:
-    //                         case 5:
-    //                             match.mons[i].state = 5;
-    //                     }
-    //                 }
-    //                 match.mo
-    //             }
-    //         }
-    //     }
-    // }
+void moveMonsters() {
+    for (short i = 0; i < match.monss; i++) {
+        if (match.mons[i].type != 0) {
+            if (match.mons[i].level == match.level + 1) {
+                if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
+                    if (match.mons[i].type != 4) {
+                        match.mons[i].state = -1;
+                    } else { //Sometimes gets far
+                        if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
+                            abs(match.mons[i].pos.y - match.pos.y) <= 1) {
+                            monsAttack(match.mons[i].type);
+                        } else {
+                            if (match.mons[i].pos.x > match.pos.x &&
+                                moveCheck(match.maps[match.level], match.mons[i].pos.y,
+                                        match.mons[i].pos.x-1, match.mons[i].pos.y, match.mons[i].pos.x))
+                                match.mons[i].pos.x--;
+                            else if (match.mons[i].pos.x < match.pos.x &&
+                                moveCheck(match.maps[match.level], match.mons[i].pos.y,
+                                        match.mons[i].pos.x+1, match.mons[i].pos.y, match.mons[i].pos.x))
+                                match.mons[i].pos.x++;
+                            else if (match.mons[i].pos.y < match.pos.y &&
+                                moveCheck(match.maps[match.level], match.mons[i].pos.y+1,
+                                        match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+                                match.mons[i].pos.y++;
+                            
+                            else if (match.mons[i].pos.y > match.pos.y &&
+                                moveCheck(match.maps[match.level], match.mons[i].pos.y-1,
+                                        match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+                                match.mons[i].pos.y--;                            
+                        }
+                    }
+
+                } else {
+                    if (match.mons[i].state == -1) {
+                        switch(match.mons[i].type) {
+                            case 1:
+                            case 2:
+                            case 4:
+                                match.mons[i].state = -2;
+                                break;
+                            case 3:
+                            case 5:
+                                match.mons[i].state = 5;
+                        }
+                    }
+                    if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
+                        abs(match.mons[i].pos.y - match.pos.y) <= 1) {
+                        monsAttack(match.mons[i].type);
+                    } else {
+                        if (match.mons[i].state == 0) return;
+                        if (match.mons[i].pos.x > match.pos.x &&
+                            moveCheck(match.maps[match.level], match.mons[i].pos.y,
+                                       match.mons[i].pos.x-1, match.mons[i].pos.y, match.mons[i].pos.x))
+                            match.mons[i].pos.x--;
+                        else if (match.mons[i].pos.x < match.pos.x &&
+                            moveCheck(match.maps[match.level], match.mons[i].pos.y,
+                                       match.mons[i].pos.x+1, match.mons[i].pos.y, match.mons[i].pos.x))
+                            match.mons[i].pos.x++;
+                        else if (match.mons[i].pos.y < match.pos.y &&
+                            moveCheck(match.maps[match.level], match.mons[i].pos.y+1,
+                                       match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+                            match.mons[i].pos.y++;
+                        
+                        else if (match.mons[i].pos.y > match.pos.y &&
+                            moveCheck(match.maps[match.level], match.mons[i].pos.y-1,
+                                       match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+                            match.mons[i].pos.y--;
+                        match.mons[i].state--;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void moveTo(short y, short x, short skip) {
@@ -1210,13 +1285,21 @@ void moveTo(short y, short x, short skip) {
     if (match.hunger > 120 - 10*match.difficulty) match.health--;
     match.pos.y = y;
     match.pos.x = x;
+    moveMonsters();
     short night = isNightmare();
     if (!isRoom()) {
         match.seen[match.level][y][x] = 1;
     }
     else if (!night) {
         short room = roomFinder(match.rooms[match.level], match.pos);
-        match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
+        if (match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] == 0) {
+            match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
+            for (short i = 0; i < match.monss; i++) {
+                if (match.mons[i].level == match.level + 1 && match.mons[i].room == room) {
+                    match.mons[i].seen = 1;
+                }
+            }
+        }
     } else {
         match.health -= 2;
     }
@@ -1330,7 +1413,7 @@ void moveTo(short y, short x, short skip) {
             }
         } break;
     }
-    moveMonsters();
+
     printMap(match.maps[match.level], match.level, 0);
 }
 
@@ -1847,7 +1930,11 @@ void setNewGame() {
     mapCreator();
     short r = roomFinder(match.rooms[0], match.pos);
     match.seen[0][match.rooms[0][r].tl.y][match.rooms[0][r].tl.x] = 1;
-
+    for (short i = 0; i < match.monss; i++) {
+        if (match.mons[i].level == 1 && match.mons[i].room == r) {
+            match.mons[i].seen = 1;
+        }
+    }
 
     printMap(match.maps[match.level], match.level, 0);
     gplay();

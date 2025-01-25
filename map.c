@@ -1,4 +1,4 @@
-/* ver: 1.3.0 */
+/* ver: 1.4.0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,6 +132,10 @@ struct game {
     monster mons[154];
     short monss;
     short lastShot;
+    short intermission;
+    short heal;
+    short strength;
+    short fast;
 };
 
 
@@ -434,6 +438,7 @@ short checkUndeed(char map[MAXy][MAXx], short y, short x)  {
 
 void monsAttack(short type) {
     match.health -= type*5 + 5;
+    match.intermission = 20;
     char li[5][30] = {"Deamon", "Fire Breathing Monstor", "Giant", "Snake", "Undeed"};
     char temp[65];
     sprintf(temp, "You Are Being Attacked By The %s!", li[type-1]);
@@ -857,9 +862,9 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 23: ch = '>'; cr = 2; break;
                     case 24: ch = '<'; cr = 2; break;
                     case 25:
-                    case 26:
-                    case 27:
                     case 28: ch = 'f'; cr = 6; break;
+                    case 26: ch = 'e'; cr = 6; break;
+                    case 27: ch = 'm'; cr = 6; break;
                     case 29: ch = 'g'; cr = 4; break;
                     case 30: ch = 'B'; cr = 3; break;
                     case 31: ch = 'M'; cr = 5; break;
@@ -926,6 +931,7 @@ void mapCreator() {
     for (short i = 0; i < 5; i++) match.foods[i].type = 0;
     match.arm[0] = 1;
     // match.arm[3] = 10;
+    match.elixir[0] = 2;
     match.brKey = 0;
     match.equArm = 0;
     match.gold = 0;
@@ -1247,7 +1253,7 @@ void moveMonsters() {
                 if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
                     if (match.mons[i].type != 4) {
                         match.mons[i].state = -1;
-                    } else { 
+                    } else if (match.mons[i].seen == 1) { 
                         moveMonster(i);
                         if (match.mons[i].state != 0) {
                             match.mons[i].state = -2;
@@ -1275,12 +1281,24 @@ void moveMonsters() {
 }
 
 void moveTo(short y, short x, short skip) {
-    if (match.hunger < 30) match.health ++;
-    match.hunger ++;
+    if (match.hunger < 30 && match.intermission <= 0) {
+        if (match.heal > 0) match.health += 2;
+        else match.health ++;
+    }
     if (match.hunger > 120 - 10*match.difficulty) match.health--;
+    match.hunger ++;
+    match.intermission --;
+    match.fast --;
+    match.strength --;
+    match.heal --;
+    if (match.hunger > 100) match.hunger = 100;
+    if (match.intermission < 0) match.intermission = 0;
+    if (match.fast < 0) match.fast = 0;
+    if (match.strength < 0) match.strength = 0;
+    if (match.heal < 0) match.heal = 0;
     match.pos.y = y;
     match.pos.x = x;
-    moveMonsters();
+    if (match.fast % 2 == 0) moveMonsters();
     short night = isNightmare();
     if (!isRoom()) {
         match.seen[match.level][y][x] = 1;
@@ -1433,11 +1451,10 @@ void fastmove(short x, short y) {
         if (state) moveTo(match.pos.y + y, match.pos.x + x, 0);
     }
 }
-void strengthen() {}
-void fasten() {}
 
 void attack(short prev) {
     char strength[5] = {5,10,12,15,5};
+    for (int i = 0; match.strength > 0 && i < 5; i++) strength[i] *= 2;
     char range[3] = {5,10,5};
     char li[5][30] = {"Deamon", "Fire Breathing Monstor", "Giant", "Snake", "Undeed"}; 
     switch (match.equArm) {
@@ -1564,6 +1581,10 @@ void attack(short prev) {
                                 }
                                 state = 0;
                                 state2 = 0;
+
+                                if (match.equArm == 4) {
+                                    match.mons[i].state = 0;
+                                }
                             }
                         }
                     }
@@ -1625,18 +1646,21 @@ void foodMenu(short i) {
                     case 1: {
                         match.foods[ind-1].type = 0;
                         match.health += 30;
+                        match.hunger -= 30;
                         Prompt("You ate a Regular Food!");
                     } break;
                     case 2: {
                         match.foods[ind-1].type = 0;
                         match.health += 30;
-                        strengthen();
+                        match.hunger -= 30;
+                        match.strength += 10;
                         Prompt("You ate an Excellent Food!");
                     } break;
                     case 3: {
                         match.foods[ind-1].type = 0;
                         match.health += 30;
-                        fasten();
+                        match.hunger -= 30;
+                        match.fast += 20;
                         Prompt("You ate a Magical Food!");
                     } break;
                     case 4: {
@@ -1668,7 +1692,7 @@ void armMenu() {
      
     for (short i = 0; i < 6; i++) {
         if (i > 2) sprintf(temp, "%s %4hd     %2hd    %2hd   ", li[i-1], strength[i-1], range[i-3], match.arm[i-1]);
-        else if (i) sprintf(temp, "%s %4hd     %2hd   ", li[i-1], strength[i-1], match.arm[i-1]);
+        else if (i) sprintf(temp, "%s %4hd     %2hd   ", li[i-1], strength[i-1], match.arm[i-1]>0);
         else sprintf(temp, "Unwield");
         butts[buttss[i]].type = 0;
         strcpy(butts[buttss[i]].label, temp);
@@ -1734,6 +1758,16 @@ void elixirMenu(short i) {
             if (match.elixir[ind-1]) {
                 match.elixir[ind-1]--;
                 sprintf(temp, "The %s Elixir Is Drunk!", li[ind-1]);
+                switch (ind) {
+                    case 1:
+                        match.heal += 10;
+                        break;
+                    case 2:
+                        match.fast += 20;
+                        break;
+                    case 3:
+                        match.strength += 10;
+                }
                 clear();
                 Prompt(temp);
                 elixirMenu(ind-1);
@@ -2061,7 +2095,7 @@ short gplay() {
                         short room = roomFinder(match.rooms[match.level], match.pos);
                         match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
                         for (short i = 0; i < match.monss; i++) {
-                            if (match.mons[i].level == match.level && match.mons[i].room == room) {
+                            if (match.mons[i].level == match.level + 1 && match.mons[i].room == room) {
                                 match.mons[i].seen = 1;
                             }
                         }

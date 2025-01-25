@@ -115,9 +115,9 @@ struct game {
     short colour;
     short difficulty;
     short music;
-    char maps[4][MAXy][MAXx];
-    char seen[4][MAXy][MAXx];
-    room rooms[5][12];
+    char maps[6][MAXy][MAXx];
+    char seen[6][MAXy][MAXx];
+    room rooms[6][12];
     short level;
     pair pos;
     short health;
@@ -129,7 +129,7 @@ struct game {
     short elixir[3];
     short key;
     short brKey;
-    monster mons[154];
+    monster mons[210];
     short monss;
     short lastShot;
     short intermission;
@@ -512,116 +512,129 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
 
     short row = MAXy, col = MAXx;
     int sum = 0, k = 0, drs = 0;
-    door doors[36];
+    if (level == 5) {
+        rooms[0].state = 1;
+        rooms[0].type = 4;
+        rooms[0].tl.x = (col/3 + rand() % (col/15));
+        rooms[0].tl.y = (row/4 + rand() % (5*row/28));
+        rooms[0].br.x = (2*col/3 - rand() % (col/15));
+        rooms[0].br.y = (3*row/4 - rand() % (5*row/28));
+        for (short i = 1; i < 12; i++) rooms[i].state = 0;
+        k = 1;
+        insertMap(map, rooms, map2);
+    } else {
+        door doors[36];
 
-    for (short i = 0; i <36; i++) {
-        doors[i].state = 0;
-        doors[i].type = 0;
-        doors[i].end = -1;
-    }
+        for (short i = 0; i <36; i++) {
+            doors[i].state = 0;
+            doors[i].type = 0;
+            doors[i].end = -1;
+            
+        }
 
-    for (short i = 0; i < 4; i++) {
-        for (short j = 0; j < 3; j++) {
-            short ii, jj;
-            pointFinder(first->tl, &ii, &jj);
-            if ((i == ii && j == jj) || rand() % 3) {
-                rooms[k].state = 1;
-                rooms[k].type = 1;
-                if (i == ii && j == jj) {
-                    rooms[k].tl = first->tl;
-                    rooms[k].br = first->br;
-                } else {
-                    rooms[k].tl.x = ((ax+bx)*i+bx)*(col/(4*ax + 5*bx)) + rand() % (col/(4*ax + 5*bx) - 5);
-                    rooms[k].tl.y = (3*j+1)*(row/10) + rand() % (2*(row/10) - 5);
-                    rooms[k].br.x = 5 + rooms[k].tl.x + rand() % (col/(4*ax + 5*bx) - 5 - rooms[k].tl.x + ((ax+bx)*i+bx)*(col/(4*ax + 5*bx)));
-                    rooms[k].br.y = 5 + rooms[k].tl.y + rand() % (2*(row/10) - 5 - rooms[k].tl.y + (3*j+1)*(row/10));
-                }
+        for (short i = 0; i < 4; i++) {
+            for (short j = 0; j < 3; j++) {
+                short ii, jj;
+                pointFinder(first->tl, &ii, &jj);
+                if ((i == ii && j == jj) || rand() % 3) {
+                    rooms[k].state = 1;
+                    rooms[k].type = 1;
+                    if (i == ii && j == jj) {
+                        rooms[k].tl = first->tl;
+                        rooms[k].br = first->br;
+                    } else {
+                        rooms[k].tl.x = ((ax+bx)*i+bx)*(col/(4*ax + 5*bx)) + rand() % (col/(4*ax + 5*bx) - 5);
+                        rooms[k].tl.y = (3*j+1)*(row/10) + rand() % (2*(row/10) - 5);
+                        rooms[k].br.x = 5 + rooms[k].tl.x + rand() % (col/(4*ax + 5*bx) - 5 - rooms[k].tl.x + ((ax+bx)*i+bx)*(col/(4*ax + 5*bx)));
+                        rooms[k].br.y = 5 + rooms[k].tl.y + rand() % (2*(row/10) - 5 - rooms[k].tl.y + (3*j+1)*(row/10));
+                    }
 
-                short length = rooms[k].br.x - rooms[k].tl.x - 1, width = rooms[k].br.y - rooms[k].tl.y - 1;
-                short drp = rand() % (2*(width + length)), drp2, drp3;
-                if (drp % (width + length) >= length) {
-                    rooms[k].doors[0].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
-                    rooms[k].doors[0].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
-                }
-                else {
-                    rooms[k].doors[0].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
-                    rooms[k].doors[0].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
-                }
-                rooms[k].doors[0].type = 1;
-                rooms[k].doors[0].state = 1;
-                rooms[k].doors[0].room = k;
-                doors[drs] = rooms[k].doors[0];
-                drs++;
-
-                if (rand() % 3) {
-                    do {drp2 = rand() % (2*(width + length));} while (abs(drp2 - drp) <= 1);
-                    drp3 = drp;
-                    drp = drp2;
+                    short length = rooms[k].br.x - rooms[k].tl.x - 1, width = rooms[k].br.y - rooms[k].tl.y - 1;
+                    short drp = rand() % (2*(width + length)), drp2, drp3;
                     if (drp % (width + length) >= length) {
-                        rooms[k].doors[1].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
-                        rooms[k].doors[1].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
+                        rooms[k].doors[0].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
+                        rooms[k].doors[0].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
                     }
                     else {
-                        rooms[k].doors[1].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
-                        rooms[k].doors[1].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
+                        rooms[k].doors[0].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
+                        rooms[k].doors[0].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
                     }
-                    rooms[k].doors[1].type = rand() % 10 ? rand() % 10 ? 1 : 4 : 2;
-                    rooms[k].doors[1].state = 1;
-                    rooms[k].doors[1].room = k;
-                    doors[drs] = rooms[k].doors[1];    
+                    rooms[k].doors[0].type = 1;
+                    rooms[k].doors[0].state = 1;
+                    rooms[k].doors[0].room = k;
+                    doors[drs] = rooms[k].doors[0];
                     drs++;
-                } else {
-                    rooms[k].doors[1].type = 0;
-                }
 
-
-                if (rand() % 5 > 2 && rooms[k].doors[1].type == 1) {
-                    do {drp2 = rand() % (2*(width + length));} while (abs(drp2 - drp) <= 1 || abs(drp3 - drp2) <= 1);
-                    drp = drp2;
-                    if (drp % (width + length) >= length) {
-                        rooms[k].doors[2].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
-                        rooms[k].doors[2].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
+                    if (rand() % 3) {
+                        do {drp2 = rand() % (2*(width + length));} while (abs(drp2 - drp) <= 1);
+                        drp3 = drp;
+                        drp = drp2;
+                        if (drp % (width + length) >= length) {
+                            rooms[k].doors[1].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
+                            rooms[k].doors[1].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
+                        }
+                        else {
+                            rooms[k].doors[1].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
+                            rooms[k].doors[1].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
+                        }
+                        rooms[k].doors[1].type = rand() % 10 ? rand() % 10 ? 1 : 4 : 2;
+                        rooms[k].doors[1].state = 1;
+                        rooms[k].doors[1].room = k;
+                        doors[drs] = rooms[k].doors[1];    
+                        drs++;
+                    } else {
+                        rooms[k].doors[1].type = 0;
                     }
-                    else {
-                        rooms[k].doors[2].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
-                        rooms[k].doors[2].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
-                    }
-                    rooms[k].doors[2].type = rand() % 10 ? 1 : 2;
-                    rooms[k].doors[2].state = 1;
-                    rooms[k].doors[2].room = k;
-                    doors[drs] = rooms[k].doors[2];
-                    drs++;
-                } else {
-                    rooms[k].doors[2].type = 0;
-                }
 
-                sum += (length) * (width);
-                k++;
+
+                    if (rand() % 5 > 2 && rooms[k].doors[1].type == 1) {
+                        do {drp2 = rand() % (2*(width + length));} while (abs(drp2 - drp) <= 1 || abs(drp3 - drp2) <= 1);
+                        drp = drp2;
+                        if (drp % (width + length) >= length) {
+                            rooms[k].doors[2].pos.x = (drp > width + length) ? rooms[k].tl.x : rooms[k].br.x;
+                            rooms[k].doors[2].pos.y = rooms[k].tl.y + 1 + (drp % (width + length) - length);
+                        }
+                        else {
+                            rooms[k].doors[2].pos.y = (drp > width + length) ? rooms[k].br.y : rooms[k].tl.y;
+                            rooms[k].doors[2].pos.x = rooms[k].tl.x + 1 + (drp % (width + length));
+                        }
+                        rooms[k].doors[2].type = rand() % 10 ? 1 : 2;
+                        rooms[k].doors[2].state = 1;
+                        rooms[k].doors[2].room = k;
+                        doors[drs] = rooms[k].doors[2];
+                        drs++;
+                    } else {
+                        rooms[k].doors[2].type = 0;
+                    }
+
+                    sum += (length) * (width);
+                    k++;
+                }
             }
         }
-    }
-    if (k < 6 || drs%2 || drs < 2*k-2) {return floorRandomizer(rooms, map, level, first, stair, map2);}
-    insertMap(map, rooms, map2);
-    for (short i = 0; i < 36; i++) {
-        if (doors[i].state) {
-            if (!doorFinder(doors, i, rooms, map)) return floorRandomizer(rooms, map, level, first, stair, map2);
-        }
-    }
-    connect(rooms, 0);
-    if (!isConnected(rooms)) return floorRandomizer(rooms, map, level, first, stair, map2);
-
-
-    for (short i = 0; i < 36 && doors[i].end != -1; i++) {
-        if (doors[i].type == 2) {
-            if (rooms[doors[i].end].doors[1].type == 2 || rooms[doors[i].end].doors[1].type == 0) {
-                rooms[doors[i].end].type = 2;
+        if (k < 6 || drs%2 || drs < 2*k-2) {return floorRandomizer(rooms, map, level, first, stair, map2);}
+        insertMap(map, rooms, map2);
+        for (short i = 0; i < 36; i++) {
+            if (doors[i].state) {
+                if (!doorFinder(doors, i, rooms, map)) return floorRandomizer(rooms, map, level, first, stair, map2);
             }
         }
+        connect(rooms, 0);
+        if (!isConnected(rooms)) return floorRandomizer(rooms, map, level, first, stair, map2);
+
+
+        for (short i = 0; i < 36 && doors[i].end != -1; i++) {
+            if (doors[i].type == 2) {
+                if (rooms[doors[i].end].doors[1].type == 2 || rooms[doors[i].end].doors[1].type == 0) {
+                    rooms[doors[i].end].type = 2;
+                }
+            }
+        }
+        for (short i = 0; i < 12 && rooms[i].state; i++) {
+            if (rooms[i].type == 1 && rand() % 9 == 0) rooms[i].type = 3; 
+        }
     }
-    for (short i = 0; i < 12 && rooms[i].state; i++) {
-        if (rooms[i].type == 1 && rand() % 9 == 0) rooms[i].type = 3; 
-    }
-    if (level == 4) {if (isIn(rooms[5].tl, *stair, rooms[5].br)) rooms[4].type = 4; else rooms[5].type = 4;}
+    // if (level == 4) {if (isIn(rooms[5].tl, *stair, rooms[5].br)) rooms[4].type = 4; else rooms[5].type = 4;}
     
     for (short i = 0; i < 12 && rooms[i].state; i++) {
         short piap = 9 - 3*match.difficulty;
@@ -643,16 +656,29 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
         }
         if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
         if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
         if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
         if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
-
-
         if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
         if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
         if (rooms[i].type == 4) {
+            if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+            if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+            if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+            if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+            if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+            if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+            if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+            if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+            if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+            if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
             if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
             if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
             if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
@@ -739,6 +765,31 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+        } if (rooms[i].type == 4) {
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
         }
         
     }
@@ -748,16 +799,16 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
     if (level) map[stair->y][stair->x] = 24;
     short r;
     short exe = 200;
-    if (level == 4) {
-        if (isIn(rooms[5].tl, *stair, rooms[5].br)) r = 4; else r = 5;
-    } else {
+    // if (level == 4) {
+    //     if (isIn(rooms[5].tl, *stair, rooms[5].br)) r = 4; else r = 5;
+    // } else {
         do {
             r = rand() % k;
         } while (isIn(rooms[k].tl, *stair, rooms[k].br) && exe--);
-    }
+    // }
     stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
     stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);
-    map[stair->y][stair->x] = 23;
+    map[stair->y][stair->x] = level == 4 ? 45 : 23;
     *first = rooms[r];
     for (short i = 0; i < 12 && rooms[i].state; i++) {
         if (rooms[i].doors[1].type == 4) {
@@ -884,6 +935,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     // case 42: ch = 'G'; cr = 8; break;
                     // case 43: ch = 'S'; cr = 8; break;
                     // case 44: ch = 'U'; cr = 8; break;
+                    case 45: ch = 'T'; cr = 2; break;
 
                     defualt: ch = ' '; cr2 = 26; break;
 
@@ -939,13 +991,13 @@ void mapCreator() {
     match.hunger = 0;
     match.key = 0;
     
-    for (short i = 0; i < 4; i++) {
+    for (short i = 0; i < 6; i++) {
         for (short j = 0; j < col; j++) {
             for (short k = 0; k < row; k++) {
                 match.maps[i][k][j] = 0;
             }
         }
-        floorRandomizer(match.rooms[i], match.maps[i], i + 1, &first, &stair, match.seen[i]);
+        if (i != 6) floorRandomizer(match.rooms[i], match.maps[i], i + 1, &first, &stair, match.seen[i]);
     }
     printMap(match.maps[match.level], match.level, 0);
     return;
@@ -1291,7 +1343,7 @@ void moveTo(short y, short x, short skip) {
     match.fast --;
     match.strength --;
     match.heal --;
-    if (match.hunger > 100) match.hunger = 100;
+    if (match.hunger > 180) match.hunger = 180;
     if (match.intermission < 0) match.intermission = 0;
     if (match.fast < 0) match.fast = 0;
     if (match.strength < 0) match.strength = 0;
@@ -1591,6 +1643,10 @@ void attack(short prev) {
                 }
             }
             match.arm[match.equArm - 1]--;
+            if (match.arm[match.equArm - 1] == 0) {
+                match.equArm = 0;
+                gPrompt("You're out of shot!");
+            }
             if (state) match.maps[match.level][y][x] = match.equArm + 33;
         }
     }
@@ -1653,7 +1709,7 @@ void foodMenu(short i) {
                         match.foods[ind-1].type = 0;
                         match.health += 30;
                         match.hunger -= 30;
-                        match.strength += 10;
+                        match.strength += 15;
                         Prompt("You ate an Excellent Food!");
                     } break;
                     case 3: {
@@ -1760,13 +1816,13 @@ void elixirMenu(short i) {
                 sprintf(temp, "The %s Elixir Is Drunk!", li[ind-1]);
                 switch (ind) {
                     case 1:
-                        match.heal += 10;
+                        match.heal += 30;
                         break;
                     case 2:
                         match.fast += 20;
                         break;
                     case 3:
-                        match.strength += 10;
+                        match.strength += 15;
                 }
                 clear();
                 Prompt(temp);
@@ -1890,6 +1946,17 @@ void pauseMenu() {
 int calcPoint() {
     return match.gold;
 }
+
+void treasureRoom() {
+    match.pos.x = MAXx/2;
+    match.pos.y = MAXy/2;
+    for (short i = 0; i < match.monss; i++) {
+    if (match.mons[i].level == match.level + 1) {
+            match.mons[i].seen = 1;
+        }
+    }
+}
+
 void endGame() {
     if (player.anonymous) {
         endwin();
@@ -2083,14 +2150,15 @@ short gplay() {
                 }
                 case '>': {
                     if (j) {}
-                    else if (match.maps[match.level][match.pos.y][match.pos.x] == 23) {
+                    else if (match.maps[match.level][match.pos.y][match.pos.x] == 23 || match.maps[match.level][match.pos.y][match.pos.x] == 45) {
                         match.level ++;
                         if (match.level == 4) {
                             clear();
                             // endwin();
-                            endGame();
+                            treasureRoom();
+                            // endGame();
                             // while (1) {}
-                            return 0;
+                            // return 0;
                         }
                         short room = roomFinder(match.rooms[match.level], match.pos);
                         match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;

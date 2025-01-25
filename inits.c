@@ -1,4 +1,4 @@
-/*version 0.8.0*/
+/*version 1.3.0*/
 #include <ncurses.h>
 #include <time.h>
 
@@ -169,6 +169,14 @@ int printMenu(struct button butts[], char title[], short len, short ii) {
             if (butts[i].type > 0 && butts[i].type < 4) mvprintw(i*2 + 5, (col/2) - strlen(butts[i].label), "%s %s", butts[i].label, butts[i].value);
             else if (butts[i].type == 0)                mvprintw(i*2 + 5, (col - strlen(butts[i].label))/2, "%s", butts[i].label);
             else if (butts[i].type == 4)                mvprintw(i*2 + 5, (col/2) - strlen(butts[i].label), "%s <- %s ->", butts[i].label, butts[i].list[butts[i].currentOption]);
+            else if (butts[i].type == 5) {
+                attron(COLOR_PAIR(1));
+                attron(A_BOLD);
+                attron(A_DIM);
+                mvprintw(i*2 + 5, (col - strlen(butts[i].label))/2, "%s", butts[i].label);
+                attroff(A_BOLD);
+                attroff(A_DIM);
+            }
             if (butts[i].state && ii != -1) {
                 attron(A_STANDOUT);
                 attron(A_UNDERLINE);
@@ -244,7 +252,7 @@ short input(char inp[], struct button butts[], char title[], short len) {
 }
 
 
-short menu (struct button butts[], short len, short end, short active, char title[]) {
+short menu (struct button butts[], short len, short end, short active, char title[], short last) {
     butts[active].state = 1;
     printMenu(butts, title, len, -1);
     
@@ -263,13 +271,13 @@ short menu (struct button butts[], short len, short end, short active, char titl
                     active--;
                     active += len;
                     active %= len;
-                    return menu(butts, len, end, active, title);
+                    return menu(butts, len, end, active, title, temp);
                 }
                 case 0: {
                     if (end) return 0;
                 }
             }
-            return menu(butts, len, end, active, title);
+            return menu(butts, len, end, active, title, temp);
         }
         case 1:
         case 2:
@@ -291,7 +299,7 @@ short menu (struct button butts[], short len, short end, short active, char titl
                     active += len;
                     active %= len;
                     (*(butts[temp].check))(butts[temp].value);
-                    return menu(butts, len, end, active, title);
+                    return menu(butts, len, end, active, title, temp);
                 }
             }
         }
@@ -310,7 +318,7 @@ short menu (struct button butts[], short len, short end, short active, char titl
                     char r[10];
                     sprintf(r, "%d", butts[temp].currentOption);
                     (*(butts[temp].check))(r);
-                    return menu(butts, len, end, active, title);
+                    return menu(butts, len, end, active, title, temp);
                 }
                 case 3: {
                     butts[temp].currentOption+=2;
@@ -318,7 +326,7 @@ short menu (struct button butts[], short len, short end, short active, char titl
                 case 4: {
                     butts[temp].currentOption--;
                     butts[temp].currentOption = (butts[temp].currentOption + butts[temp].options) % butts[temp].options;
-                    return menu(butts, len, end, active, title);
+                    return menu(butts, len, end, active, title, temp);
                 }
                 case 2: {
                     char r[10];
@@ -329,7 +337,11 @@ short menu (struct button butts[], short len, short end, short active, char titl
                     if (end) return 0;
                 }
             }
-            return menu(butts, len, end, active, title);
+            return menu(butts, len, end, active, title, temp);
+        } break;
+        case (5): {
+            if ((active - last + len)%len == 1) return menu(butts, len, end, active+1, title, last+1);
+            else                                return menu(butts, len, end, active-1, title, last-1);
         }
     }
 }

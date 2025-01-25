@@ -1,4 +1,4 @@
-/* ver: 1.2.0 */
+/* ver: 1.3.0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -131,6 +131,7 @@ struct game {
     short brKey;
     monster mons[154];
     short monss;
+    short lastShot;
 };
 
 
@@ -167,13 +168,13 @@ typedef struct {
     29 Gold
     30 Black Gold
     31 Mace
-    32 Dagger
-    33 Magic Wand
-    34 Normal Arrow
-    35 Sword
-    36 Health Elixir
-    37 Speed Elixir
-    38 Damage Elixir
+    32 Sword
+    33 Dagger
+    34 Magical Wand
+    35 Normal Arrow
+    36 Used Dagger
+    37 Used Magical Wand
+    38 Used Normal Arrow
     39 Ancient Key
     40 Deamen
     41 FBD
@@ -181,6 +182,9 @@ typedef struct {
     43 Snake
     44 Undeed
     45 Treasure
+    46 Health Elixir
+    47 Speed Elixir
+    48 Damage Elixir
     */
 } obj;
 
@@ -661,8 +665,8 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         }
         if (rand() % armo == 0) {
             int sym;
-            switch (rand() % 5) {
-                case 0: sym = 31; break;
+            switch (rand() % 4 + 1) {
+                // case 0: sym = 31; break;
                 case 1: sym = 32; break;
                 case 2: sym = 33; break;
                 case 3: sym = 34; break;
@@ -673,18 +677,18 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         if (rand() % elix == 0) {
             int sym;
             switch (rand() % 3) {
-                case 0: sym = 36; break;
-                case 1: sym = 37; break;
-                case 2: sym = 38; break;
+                case 0: sym = 46; break;
+                case 1: sym = 47; break;
+                case 2: sym = 48; break;
             }
             map[x + rand() % length][y + rand() % width] = sym;
         }
         if (rand() % elix == 0) {
             int sym;
             switch (rand() % 3) {
-                case 0: sym = 36; break;
-                case 1: sym = 37; break;
-                case 2: sym = 38; break;
+                case 0: sym = 46; break;
+                case 1: sym = 47; break;
+                case 2: sym = 48; break;
             }
             map[x + rand() % length][y + rand() % width] = sym;
         }
@@ -692,36 +696,36 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % elix == 0) {
                 int sym;
                 switch (rand() % 3) {
-                    case 0: sym = 36; break;
-                    case 1: sym = 37; break;
-                    case 2: sym = 38; break;
+                    case 0: sym = 46; break;
+                    case 1: sym = 47; break;
+                    case 2: sym = 48; break;
                 }
                 map[x + rand() % length][y + rand() % width] = sym;
             }
             if (rand() % elix == 0) {
                 int sym;
                 switch (rand() % 3) {
-                    case 0: sym = 36; break;
-                    case 1: sym = 37; break;
-                    case 2: sym = 38; break;
+                    case 0: sym = 46; break;
+                    case 1: sym = 47; break;
+                    case 2: sym = 48; break;
                 }
                 map[x + rand() % length][y + rand() % width] = sym;
             }
             if (rand() % elix == 0) {
                 int sym;
                 switch (rand() % 3) {
-                    case 0: sym = 36; break;
-                    case 1: sym = 37; break;
-                    case 2: sym = 38; break;
+                    case 0: sym = 46; break;
+                    case 1: sym = 47; break;
+                    case 2: sym = 48; break;
                 }
                 map[x + rand() % length][y + rand() % width] = sym;
             }
             if (rand() % elix == 0) {
                 int sym;
                 switch (rand() % 3) {
-                    case 0: sym = 36; break;
-                    case 1: sym = 37; break;
-                    case 2: sym = 38; break;
+                    case 0: sym = 46; break;
+                    case 1: sym = 47; break;
+                    case 2: sym = 48; break;
                 }
                 map[x + rand() % length][y + rand() % width] = sym;
             }
@@ -793,10 +797,14 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
             mvprintw(i+1,j, " ");
         }
     }
-    char li[5][15] = {"Mace", "Dagger", "Magic Wand", "Normal Arrow", "Sword"};
+    char li[5][15] = {"Mace", "Sword", "Dagger", "Magic Wand", "Normal Arrow"};
 
     char invents[MAXx];
-    sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, li[match.equArm], match.arm[match.equArm], match.health, match.hunger);
+    if (match.equArm) {
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], match.health, match.hunger);
+    } else {
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, match.health, match.hunger);
+    }
     attron(COLOR_PAIR(4));
     mvprintw(1, 4, "%s", invents);
     attron(A_BOLD);
@@ -855,13 +863,16 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 29: ch = 'g'; cr = 4; break;
                     case 30: ch = 'B'; cr = 3; break;
                     case 31: ch = 'M'; cr = 5; break;
-                    case 32: ch = 'd'; cr = 5; break;
-                    case 33: ch = 'W'; cr = 5; break;
-                    case 34: ch = 'A'; cr = 5; break;
-                    case 35: ch = 's'; cr = 5; break;
-                    case 36: ch = 'H'; cr = 7; break;
-                    case 37: ch = 'X'; cr = 7; break;
-                    case 38: ch = 'E'; cr = 7; break;
+                    case 32: ch = 's'; cr = 5; break;
+                    case 33:
+                    case 36: ch = 'd'; cr = 5; break;
+                    case 34:
+                    case 37: ch = 'W'; cr = 5; break;
+                    case 35:
+                    case 38: ch = 'A'; cr = 5; break;
+                    case 46: ch = 'H'; cr = 7; break;
+                    case 47: ch = 'X'; cr = 7; break;
+                    case 48: ch = 'E'; cr = 7; break;
                     case 39: ch = 'K'; cr = 5; break;
                     // case 40: ch = 'D'; cr = 8; break;
                     // case 41: ch = 'F'; cr = 8; break;
@@ -914,6 +925,7 @@ void mapCreator() {
     for (short i = 0; i < 3; i++) match.elixir[i] = 0;
     for (short i = 0; i < 5; i++) match.foods[i].type = 0;
     match.arm[0] = 1;
+    // match.arm[3] = 10;
     match.brKey = 0;
     match.equArm = 0;
     match.gold = 0;
@@ -1204,6 +1216,30 @@ short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
     }
 }
 
+void moveMonster(short i) {
+    /* Snake Starts Chasing Before Being Seen*/
+
+    if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
+        abs(match.mons[i].pos.y - match.pos.y) <= 1) {
+        monsAttack(match.mons[i].type);
+    } else {
+        if (match.mons[i].state == 0) return;
+        if (match.mons[i].pos.x > match.pos.x && moveCheck(match.maps[match.level], match.mons[i].pos.y,
+            match.mons[i].pos.x-1, match.mons[i].pos.y, match.mons[i].pos.x))
+            match.mons[i].pos.x--;
+        else if (match.mons[i].pos.x < match.pos.x && moveCheck(match.maps[match.level], match.mons[i].pos.y,
+                 match.mons[i].pos.x+1, match.mons[i].pos.y, match.mons[i].pos.x))
+            match.mons[i].pos.x++;
+        else if (match.mons[i].pos.y < match.pos.y && moveCheck(match.maps[match.level], match.mons[i].pos.y+1,
+                 match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+            match.mons[i].pos.y++;
+        else if (match.mons[i].pos.y > match.pos.y && moveCheck(match.maps[match.level], match.mons[i].pos.y-1,
+                 match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
+            match.mons[i].pos.y--;
+        match.mons[i].state--;
+    }
+}
+
 void moveMonsters() {
     for (short i = 0; i < match.monss; i++) {
         if (match.mons[i].type != 0) {
@@ -1211,28 +1247,10 @@ void moveMonsters() {
                 if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
                     if (match.mons[i].type != 4) {
                         match.mons[i].state = -1;
-                    } else { //Sometimes gets far
-                        if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
-                            abs(match.mons[i].pos.y - match.pos.y) <= 1) {
-                            monsAttack(match.mons[i].type);
-                        } else {
-                            if (match.mons[i].pos.x > match.pos.x &&
-                                moveCheck(match.maps[match.level], match.mons[i].pos.y,
-                                        match.mons[i].pos.x-1, match.mons[i].pos.y, match.mons[i].pos.x))
-                                match.mons[i].pos.x--;
-                            else if (match.mons[i].pos.x < match.pos.x &&
-                                moveCheck(match.maps[match.level], match.mons[i].pos.y,
-                                        match.mons[i].pos.x+1, match.mons[i].pos.y, match.mons[i].pos.x))
-                                match.mons[i].pos.x++;
-                            else if (match.mons[i].pos.y < match.pos.y &&
-                                moveCheck(match.maps[match.level], match.mons[i].pos.y+1,
-                                        match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
-                                match.mons[i].pos.y++;
-                            
-                            else if (match.mons[i].pos.y > match.pos.y &&
-                                moveCheck(match.maps[match.level], match.mons[i].pos.y-1,
-                                        match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
-                                match.mons[i].pos.y--;                            
+                    } else { 
+                        moveMonster(i);
+                        if (match.mons[i].state != 0) {
+                            match.mons[i].state = -2;
                         }
                     }
 
@@ -1249,30 +1267,7 @@ void moveMonsters() {
                                 match.mons[i].state = 5;
                         }
                     }
-                    if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
-                        abs(match.mons[i].pos.y - match.pos.y) <= 1) {
-                        monsAttack(match.mons[i].type);
-                    } else {
-                        if (match.mons[i].state == 0) return;
-                        if (match.mons[i].pos.x > match.pos.x &&
-                            moveCheck(match.maps[match.level], match.mons[i].pos.y,
-                                       match.mons[i].pos.x-1, match.mons[i].pos.y, match.mons[i].pos.x))
-                            match.mons[i].pos.x--;
-                        else if (match.mons[i].pos.x < match.pos.x &&
-                            moveCheck(match.maps[match.level], match.mons[i].pos.y,
-                                       match.mons[i].pos.x+1, match.mons[i].pos.y, match.mons[i].pos.x))
-                            match.mons[i].pos.x++;
-                        else if (match.mons[i].pos.y < match.pos.y &&
-                            moveCheck(match.maps[match.level], match.mons[i].pos.y+1,
-                                       match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
-                            match.mons[i].pos.y++;
-                        
-                        else if (match.mons[i].pos.y > match.pos.y &&
-                            moveCheck(match.maps[match.level], match.mons[i].pos.y-1,
-                                       match.mons[i].pos.x, match.mons[i].pos.y, match.mons[i].pos.x))
-                            match.mons[i].pos.y--;
-                        match.mons[i].state--;
-                    }
+                    moveMonster(i);
                 }
             }
         }
@@ -1374,29 +1369,35 @@ void moveTo(short y, short x, short skip) {
         case 32:
         case 33:
         case 34:
-        case 35: {
-            if (!skip) {
-                if(night) gPrompt("HAHAHAHA! I'm seeing a nightmare, a nightmare I could not bear!");
-                else {
-                    char guns[5][15] = {"Mace", "Dagger", "Magical Wand", "Normal Arrow", "Sword"};
-                    match.arm[match.maps[match.level][y][x] - 31]++;
-                    char message[100];
-                    sprintf(message, "You warrior! You picked up the %s!", guns[match.maps[match.level][y][x] - 31]);
-                    gPrompt(message);
-                }
-                match.maps[match.level][y][x] = 7;
-            }
-        } break;
+        case 35:
         case 36:
         case 37:
         case 38: {
             if (!skip) {
                 if(night) gPrompt("HAHAHAHA! I'm seeing a nightmare, a nightmare I could not bear!");
                 else {
-                    char els[5][10] = {"Health", "Speed", "Damage"};
-                    match.elixir[match.maps[match.level][y][x] - 36]++;
+                    char guns[8][20] = {"the Mace", "the Sword", "10 Daggers", "8 Magical Wands", "20 Normal Arrows", "the Dagger", "the Magical Wand", "the Normal Arrow",};
+                    char gunCount[8] = {1,1,10,8,20,1,1,1};
+                    char mess[2][12] = {"picked up", "retreated"};
+                    match.arm[(match.maps[match.level][y][x] < 36) ? (match.maps[match.level][y][x] - 31) :
+                              (match.maps[match.level][y][x] - 34)] += gunCount[match.maps[match.level][y][x] - 31];
                     char message[100];
-                    sprintf(message, "Merlin put that elixir for you! You picked up the %s Elixir!", els[match.maps[match.level][y][x] - 36]);
+                    sprintf(message, "You warrior! You %s %s %d %d %d %d %d!", guns[match.maps[match.level][y][x] - 31], mess[(match.maps[match.level][y][x] > 35)?1:0], match.arm[1], match.arm[2], match.arm[3], match.arm[4], match.maps[match.level][y][x]);
+                    gPrompt(message);
+                }
+                match.maps[match.level][y][x] = 7;
+            }
+        } break;
+        case 46:
+        case 47:
+        case 48: {
+            if (!skip) {
+                if(night) gPrompt("HAHAHAHA! I'm seeing a nightmare, a nightmare I could not bear!");
+                else {
+                    char els[5][10] = {"Health", "Speed", "Damage"};
+                    match.elixir[match.maps[match.level][y][x] - 46]++;
+                    char message[100];
+                    sprintf(message, "Merlin put that elixir for you! You picked up the %s Elixir!", els[match.maps[match.level][y][x] - 46]);
                     gPrompt(message);
                 }
                 match.maps[match.level][y][x] = 7;
@@ -1435,6 +1436,146 @@ void fastmove(short x, short y) {
 void strengthen() {}
 void fasten() {}
 
+void attack(short prev) {
+    char strength[5] = {5,10,12,15,5};
+    char range[3] = {5,10,5};
+    char li[5][30] = {"Deamon", "Fire Breathing Monstor", "Giant", "Snake", "Undeed"}; 
+    switch (match.equArm) {
+        case 1:
+        case 2: {
+            short state = 1;
+            for (short i = 0; i < match.monss; i++) {
+                if (match.mons[i].level == match.level + 1 &&
+                    abs(match.mons[i].pos.x-match.pos.x) <= 1 &&
+                    abs(match.mons[i].pos.y-match.pos.y) <= 1) {
+                    match.mons[i].health -= strength[match.equArm-1];
+                    if (match.mons[i].health < 0) match.mons[i].health = 0;
+                    char message[100];
+                    sprintf(message, "You hit the %s, it's health is %d as of now!", li[match.mons[i].type-1], match.mons[i].health);
+                    gPrompt(message);        
+                    if (match.mons[i].health == 0) {
+                        match.mons[i].type = 0;
+                    }
+                    state = 0;
+                }
+            }
+            if (state) gPrompt("No Monster Nearby!");
+        } break;
+        case 3:
+        case 4:
+        case 5: {
+            if (!prev) {
+                char c;
+                char new = -1;
+                while (new == -1) {
+                    c = getch();
+                    switch (c) {
+                        case UA:
+                        case 'j':
+                        case 'J':
+                        case '8':
+                        // case '^[[A':
+                            new = 0;
+                            break;
+                        case DA:
+                        case 'k':
+                        case 'K':
+                        case '2':
+                        // case '^[[B':
+                            new = 1;
+                            break;
+                        case LA:
+                        case 'h':
+                        case 'H':
+                        case '4':
+                        // case '^[[D':
+                            new = 2;
+                            break;
+                        case RA:
+                        case 'l':
+                        case 'L':
+                        case '6':
+                        // case '^[[C':
+                            new = 3;
+                            break;
+                        case '7':
+                        case 'y':
+                        case 'Y':
+                        // case '^[[H': 
+                            new = 4;
+                            break;
+                        case '9':
+                        case 'u':
+                        case 'U':
+                        // case '^55~':
+                            new = 5;
+                            break;
+                        case 'b':
+                        case 'B':
+                        case '1':
+                        // case '^[[F':
+                            new = 6;
+                            break;
+                        case '3':
+                        case 'N':
+                        case 'n':
+                        // case '^[[6~':
+                            new = 7;
+                            break;
+                        case 'a': {
+                            new = match.lastShot;
+                        } break;
+                        case ES: {
+                            return;
+                        }
+                    }
+                }
+                match.lastShot = new;
+            }
+            char x = match.pos.x;
+            char y = match.pos.y;
+            char xs[8] = {0,0,-1,1,-1,1,-1,1};
+            char ys[8] = {-1,1,0,0,-1,-1,1,1};
+            char ranges[3] = {5,10,5}; 
+            char state = 1, state2 = 1;
+            while (state2 && ranges[match.equArm-3]--) {
+                y += ys[match.lastShot];
+                x += xs[match.lastShot];
+                switch(match.maps[match.level][y][x]) { 
+                    case  0: case  1: case  2: case  3: case  4: case  5: case  6: case 20: case 11: {
+                        state2 = 0;
+                        y -= ys[match.lastShot];
+                        x -= xs[match.lastShot];
+                    } break;
+                    default: {
+                        for (short i = 0; i < match.monss; i++) {
+                            if (match.level + 1 == match.mons[i].level &&
+                                y == match.mons[i].pos.y &&
+                                x == match.mons[i].pos.x &&
+                                match.mons[i].type !=  0)
+                            {
+                                match.mons[i].health -= strength[match.equArm-1];
+                                if (match.mons[i].health < 0) match.mons[i].health = 0;
+                                char message[100];
+                                sprintf(message, "You hit the %s, it's health is %d as of now!", li[match.mons[i].type-1], match.mons[i].health);
+                                gPrompt(message);        
+                                if (match.mons[i].health == 0) {
+                                    match.mons[i].type = 0;
+                                }
+                                state = 0;
+                                state2 = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            match.arm[match.equArm - 1]--;
+            if (state) match.maps[match.level][y][x] = match.equArm + 33;
+        }
+    }
+
+}
+
 void foodMenu(short i) {
     initSCR();
     
@@ -1455,7 +1596,7 @@ void foodMenu(short i) {
     
     short state = 1, active = i;
     while (state) {
-        int ind = menu(butts, 5, 1, active, "Choose food to eat!");
+        int ind = menu(butts, 5, 1, active, "Choose food to eat!",1);
         switch (ind) {
             case 0: { 
                 clear();
@@ -1515,32 +1656,52 @@ void armMenu() {
     initSCR();
     
     timer = 5;
-    char temp[35];
-    char li[5][15] = {"Mace", "Dagger", "Magic Wand", "Normal Arrow", "Sword"};
-    struct button butts[5];
-    
-    for (short i = 0; i < 5; i++) {
-        sprintf(temp, "%s: %hd", li[i], match.arm[i]);
-        butts[i].type = 0;
-        strcpy(butts[i].label, temp);
+    char temp[80];
+    char li[5][21] = {"        Mace        ", "       Sword        ", "      Dagger       ", "     Magic Wand     ", "    Normal Arrow    "};
+    char liPrint[5][21] = {"Mace", "Sword", "Dagger", "Magic Wand", "Normal Arrow"};
+    char li2[4][40] = {" ", "Short-Ranged Weapon Strength Count", " ", "Long-Ranged Weapon Strenth Range Count"};
+    char strength[5] = {5,10,12,15,5};
+    char range[3] = {5,10,5}; 
+    struct button butts[10];
+    char buttss[6] = {0,3,4,7,8,9};
+    char buttss2[4] = {1,2,5,6};
+     
+    for (short i = 0; i < 6; i++) {
+        if (i > 2) sprintf(temp, "%s %4hd     %2hd    %2hd   ", li[i-1], strength[i-1], range[i-3], match.arm[i-1]);
+        else if (i) sprintf(temp, "%s %4hd     %2hd   ", li[i-1], strength[i-1], match.arm[i-1]);
+        else sprintf(temp, "Unwield");
+        butts[buttss[i]].type = 0;
+        strcpy(butts[buttss[i]].label, temp);
         sprintf(temp, "%hd", i+1);
-        strcpy(butts[i].value, temp);
-        butts[i].state = 0;
+        strcpy(butts[buttss[i]].value, temp);
+        butts[buttss[i]].state = 0;
     }
+    for (short i = 0; i < 4; i++) {
+        butts[buttss2[i]].type = 5;
+        strcpy(butts[buttss2[i]].label, li2[i]);
+        butts[buttss2[i]].state = 0;
+    }
+
+    
+
     butts[match.equArm].state = 1;
     
     short state = 1, active = match.equArm;
     while (state) {
-        int ind = menu(butts, 5, 1, active, "Select Weapon To Wield!");
-        if (ind) {
-            if (match.arm[ind-1]) {
+        int ind = menu(butts, 10, 1, active, "Select Weapon To Wield!", 1);
+        if (ind > 1) {
+            if (match.arm[ind-2]) {
                 match.equArm = ind-1;
-                sprintf(temp, "The %s is now weilded!", li[ind-1]);
+                sprintf(temp, "The %s is now wielded!", liPrint[ind-2]);
                 Prompt(temp);
             } else {
                 Prompt("You have not any of this weapon!");
             }
-            active = ind - 1;
+            active = buttss[ind-1];
+        } else if (ind == 1) {
+            match.equArm = 0;
+            Prompt("You are unarmed as of now");
+            active = 0;
         } else {
             clear();
             printMap(match.maps[match.level], match.level, 0);
@@ -1568,7 +1729,7 @@ void elixirMenu(short i) {
     
     short state = 1, active = i;
     while (state) {
-        int ind = menu(butts, 3, 1, active, "Select Elixir To Drink!");
+        int ind = menu(butts, 3, 1, active, "Select Elixir To Drink!",1);
         if (ind) {
             if (match.elixir[ind-1]) {
                 match.elixir[ind-1]--;
@@ -1669,7 +1830,7 @@ void pauseMenu() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, i+1, 1, active, "Game Paused!");
+        int ind = menu(butts, i+1, 1, active, "Game Paused!",1);
         switch (ind) {
             case 1:
             case 0: {
@@ -1863,8 +2024,17 @@ short gplay() {
                         moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
                     else gPrompt("Impossible move!");
                 } break;
-                case '5':
+                case 'a': {
+                    if (match.equArm) attack(1);
+                    else gPrompt("You have no weapon wielded!");
+                } break;
                 case ' ': {
+                    if (match.equArm) {
+                        attack(0);
+                        break;
+                    }
+                }
+                case '5': {
                     moveTo(match.pos.y, match.pos.x, 0);
                     i = 1;
                 }
@@ -1890,7 +2060,11 @@ short gplay() {
                         }
                         short room = roomFinder(match.rooms[match.level], match.pos);
                         match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x] = 1;
-
+                        for (short i = 0; i < match.monss; i++) {
+                            if (match.mons[i].level == match.level && match.mons[i].room == room) {
+                                match.mons[i].seen = 1;
+                            }
+                        }
                         gPrompt("Going to the next floor...");
 
                     }

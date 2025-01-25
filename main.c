@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:0.8.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.3.0*/
 #include "map.c"
 
 void mainMenu();
@@ -228,7 +228,7 @@ void signupForm() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 5, 1, active, "Sign Up Form");
+        int ind = menu(butts, 5, 1, active, "Sign Up Form",1);
         // printf("%d", ind);
         switch (ind) {
             case 0: {
@@ -367,7 +367,7 @@ void passResetForm() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 4, 1, active, "Password Finder Form");
+        int ind = menu(butts, 4, 1, active, "Password Finder Form",1);
         switch (ind) {
             case 0: { 
                 clear();
@@ -416,7 +416,7 @@ void loginForm() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 4, 1, active, "Login Form");
+        int ind = menu(butts, 4, 1, active, "Login Form",1);
         switch (ind) {
             case 0: { 
                 clear();
@@ -478,7 +478,7 @@ void continueForm() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, i, 1, active, "Continue Game Id: ");
+        int ind = menu(butts, i, 1, active, "Continue Game Id: ",1);
         if (ind == 0) {
             clear();
             endwin();
@@ -676,7 +676,7 @@ void Setting() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, 3, 1, active, "Settings: ");
+        int ind = menu(butts, 3, 1, active, "Settings: ",1);
         if (ind == 0) {
             clear();
             endwin();
@@ -746,7 +746,7 @@ void mainMenu() {
     
     short state = 1, active = 0;
     while (state) {
-        int ind = menu(butts, i+1, 1, active, "Main Menu");
+        int ind = menu(butts, i+1, 1, active, "Main Menu",1);
         switch (ind) {
             case 0: {
                 if (confirm()) {

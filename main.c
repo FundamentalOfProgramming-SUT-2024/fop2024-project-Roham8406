@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.3.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.5.0*/
 #include "map.c"
 
 void mainMenu();
@@ -449,6 +449,7 @@ void loginForm() {
 }
 
 void continueForm() {
+    /* Core Dumps when there's no file to load*/
     initSCR();
     
     timer = 5;
@@ -458,6 +459,7 @@ void continueForm() {
     fptr = fopen("games_saved/games.txt", "r");
     char line[30], user[30], ver[30], files[100][30];
     while (fgets(line, 30, fptr)) {
+        if (*line == '\n') continue;
 
         sscanf(line, "%s %s", user, ver);
         if (!strcmp(user, player.username)) {
@@ -492,6 +494,7 @@ void continueForm() {
         fread(&match, sizeof(struct game), 1, fptr);
         fclose(fptr);
         Prompt("Loading Game...");  
+        strcpy(fileId, files[ind-1]);
         sleep(2);
         endwin();
         initSCR();

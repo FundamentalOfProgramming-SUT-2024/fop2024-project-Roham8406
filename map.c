@@ -115,9 +115,9 @@ struct game {
     short colour;
     short difficulty;
     short music;
-    char maps[6][MAXy][MAXx];
-    char seen[6][MAXy][MAXx];
-    room rooms[6][12];
+    char maps[7][MAXy][MAXx];
+    char seen[7][MAXy][MAXx];
+    room rooms[7][12];
     short level;
     pair pos;
     short health;
@@ -136,6 +136,8 @@ struct game {
     short heal;
     short strength;
     short fast;
+    pair last;
+    short lastLevel;
 };
 
 
@@ -143,6 +145,7 @@ struct gamer player;
 struct game match;
 struct track tracks[MUSICS];
 time_t seen;
+char fileId[50] = "";
 
 
 
@@ -436,6 +439,24 @@ short checkUndeed(char map[MAXy][MAXx], short y, short x)  {
     
 }
 
+short bplay();
+void moveTo(short, short, short);
+int battleRandomizer(room [12], char [MAXy][MAXx], char [MAXy][MAXx]);
+
+void battle() {
+    match.lastLevel = match.level;
+    match.level = 5;
+    match.last = match.pos;
+    match.pos.x = MAXx/2;
+    match.pos.y = MAXy/2;
+    moveTo(match.pos.y, match.pos.x, 0);
+    battleRandomizer(match.rooms[5], match.maps[5], match.seen[5]);
+    clear();
+    bplay();
+    match.level = match.lastLevel;
+    match.pos = match.last;
+}
+
 void monsAttack(short type) {
     match.health -= type*5 + 5;
     match.intermission = 20;
@@ -496,6 +517,204 @@ void addMonster(short level, room rooms[12], short i, char map[MAXy][MAXx]) {
     // short (*func[5])(char**, short, short) = {&checkDeamon, &checkFBM, &checkGiant, &checkSnake, &checkUndeed};
     // match.mons[match.monss].func = func[match.mons[match.monss].type];
 }
+
+void addBattleMonster(room rooms[12], short i, char map[MAXy][MAXx]) {
+    short x = rooms[0].tl.x + 1;
+    short y = rooms[0].tl.y + 1;
+    short length = (rooms[0].br.x - rooms[0].tl.x - 1);
+    short width  = (rooms[0].br.y - rooms[0].tl.y - 1);
+    match.mons[i].level = 6;
+    match.mons[i].room = 0;
+    match.mons[i].state = -1;
+    match.mons[i].seen = 1;
+    match.mons[i].pos.x = x + rand() % length;
+    match.mons[i].pos.y = y + rand() % width;
+    short num, health, type;
+    switch(rand()%10) {
+        case 0:
+        case 1:
+        case 2: {
+            type = 1;
+            num = 40;
+            health = 5;
+        } break;
+        case 3:
+        case 4:
+        case 5: {
+            type = 2;
+            num = 41;
+            health = 10;
+        } break;
+        case 6:{
+            type = 3;
+            health = 15;
+            num = 42;
+        } break;
+        case 7:
+        case 8: {
+            health = 20;
+            type = 4;
+            num = 43;
+        } break;
+        case 9: {
+            health = 30;
+            type = 5;
+            num = 44;
+        }
+    }
+    // map[match.mons[i].pos.x][match.mons[i].pos.y] = num;
+    match.mons[i].health = health;
+    match.mons[i].type = type;
+    // short (*func[5])(char**, short, short) = {&checkDeamon, &checkFBM, &checkGiant, &checkSnake, &checkUndeed};
+    // match.mons[match.monss].func = func[match.mons[match.monss].type];
+}
+
+int battleRandomizer(room rooms[12], char map[MAXy][MAXx], char map2[MAXy][MAXx]) {
+    short level = 6;
+    for (short i = 0; i < MAXx; i++) {
+        for (short j = 0; j < MAXy; j++) {
+            map2[j][i] = 1;
+        }
+    }
+    for (short i = 0; i < 13; i++) {
+        rooms[i].state = 0;
+        rooms[i].doors[0].state = 0;
+        rooms[i].doors[1].state = 0;
+        rooms[i].doors[2].state = 0;
+        for (int j = 0; j < 11; j++) {
+            rooms[i].nei[j] = -1;
+        }
+        rooms[i].neiC = 0;
+    }
+
+    short row = MAXy, col = MAXx;
+    int sum = 0, k = 0, drs = 0;
+    rooms[0].state = 1;
+    rooms[0].type = 1;
+    rooms[0].tl.x = (col/3 + rand() % (col/15));
+    rooms[0].tl.y = (row/4 + rand() % (5*row/28));
+    rooms[0].br.x = (2*col/3 - rand() % (col/15));
+    rooms[0].br.y = (3*row/4 - rand() % (5*row/28));
+    for (short i = 1; i < 12; i++) rooms[i].state = 0;
+    k = 1;
+    insertMap(map, rooms, map2);
+    
+    short i = 0;
+    short piap = 7 - 3*match.difficulty;
+    short food = 4 + 3*match.difficulty;
+    short gold = 5 + 2*match.difficulty;
+    short armo = 5 + 3*match.difficulty;
+    short elix = 5 + 2*match.difficulty;
+    short mons = 4 - match.difficulty;
+
+    short y = rooms[i].tl.x + 1;
+    short x = rooms[i].tl.y + 1;
+
+    short width = (rooms[i].br.x - rooms[i].tl.x - 1);
+    short length  = (rooms[i].br.y - rooms[i].tl.y - 1);
+
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 20;
+    
+    if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
+    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+    if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
+    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+    if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
+    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+    
+    if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+    if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+    if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+    if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+    if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
+    if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
+    if (rand() % armo == 0) {
+        int sym;
+        switch (rand() % 4 + 1) {
+            // case 0: sym = 31; break;
+            case 1: sym = 32; break;
+            case 2: sym = 33; break;
+            case 3: sym = 34; break;
+            case 4: sym = 35; break;
+        }
+        map[x + rand() % length][y + rand() % width] = sym;
+    }
+    if (rand() % armo == 0) {
+        int sym;
+        switch (rand() % 4 + 1) {
+            // case 0: sym = 31; break;
+            case 1: sym = 32; break;
+            case 2: sym = 33; break;
+            case 3: sym = 34; break;
+            case 4: sym = 35; break;
+        }
+        map[x + rand() % length][y + rand() % width] = sym;
+    }
+    if (rand() % elix == 0) {
+        int sym;
+        switch (rand() % 3) {
+            case 0: sym = 46; break;
+            case 1: sym = 47; break;
+            case 2: sym = 48; break;
+        }
+        map[x + rand() % length][y + rand() % width] = sym;
+    }
+    if (rand() % elix == 0) {
+        int sym;
+        switch (rand() % 3) {
+            case 0: sym = 46; break;
+            case 1: sym = 47; break;
+            case 2: sym = 48; break;
+        }
+        map[x + rand() % length][y + rand() % width] = sym;
+    }
+
+    if (rand() % elix == 0) {
+        int sym;
+        switch (rand() % 3) {
+            case 0: sym = 46; break;
+            case 1: sym = 47; break;
+            case 2: sym = 48; break;
+        }
+        map[x + rand() % length][y + rand() % width] = sym;
+    }
+    short j = 190;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+    if (rand() % mons == 0) {addBattleMonster(rooms, j++, map);} else match.mons[j-1].type = 0;
+
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+    addBattleMonster(rooms, j++, map);
+
+    return sum;
+}
+
 
 int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *first, pair *stair, char map2[MAXy][MAXx]) {
     
@@ -848,18 +1067,25 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
 }
 
 void printMap(char map[MAXy][MAXx], short level, short cheat) {
+    
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
             mvprintw(i+1,j, " ");
         }
     }
+
+    // short count = 0;
+    // for (short i = 190; i < 210; i++) {
+    //     if (match.mons[i].type) count ++ ;
+    // }
+    // mvprintw(1,1,"%d", count);
     char li[5][15] = {"Mace", "Sword", "Dagger", "Magic Wand", "Normal Arrow"};
 
     char invents[MAXx];
     if (match.equArm) {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], match.health, match.hunger);
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d\tLevel: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], match.health, match.hunger, match.level);
     } else {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %d\tHunger: %d", match.gold, match.key, match.brKey, match.health, match.hunger);
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %d\tHunger: %d\tLevel: %d", match.gold, match.key, match.brKey, match.health, match.hunger, match.level);
     }
     attron(COLOR_PAIR(4));
     mvprintw(1, 4, "%s", invents);
@@ -957,7 +1183,9 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     pair node = {match.pos.x, match.pos.y};
     short roomIn = roomFinder(match.rooms[level], node);
     attron(COLOR_PAIR(3));
-    for (short i = 0; i < match.monss; i++) {
+    int counter = match.level == 5 ? 190:0;
+    int moCount = match.level == 5 ? 210:match.monss;
+    for (short i = counter; i < moCount; i++) {
         if (match.mons[i].type != 0 && match.mons[i].seen == 1 &&
             match.mons[i].level == match.level + 1) {
             char sym[6] = "DFGSU";
@@ -991,7 +1219,7 @@ void mapCreator() {
     match.hunger = 0;
     match.key = 0;
     
-    for (short i = 0; i < 6; i++) {
+    for (short i = 0; i < 5; i++) {
         for (short j = 0; j < col; j++) {
             for (short k = 0; k < row; k++) {
                 match.maps[i][k][j] = 0;
@@ -1263,7 +1491,9 @@ short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
             return 0;
         } break;
         default: {
-            for (short i = 0; i < match.monss; i++) {
+            int counter = match.level == 5 ? 190:0;
+            int moCount = match.level == 5 ? 210:match.monss;
+            for (short i = counter; i < moCount; i++) {
                 if (match.level + 1 == match.mons[i].level &&
                     y == match.mons[i].pos.y &&
                     x == match.mons[i].pos.x &&
@@ -1299,7 +1529,9 @@ void moveMonster(short i) {
 }
 
 void moveMonsters() {
-    for (short i = 0; i < match.monss; i++) {
+    int counter = match.level == 5 ? 190:0;
+    int count = match.level == 5 ? 210:match.monss;
+    for (short i = counter; i < count; i++) {
         if (match.mons[i].type != 0) {
             if (match.mons[i].level == match.level + 1) {
                 if (match.mons[i].room != roomFinder(match.rooms[match.level], match.pos)) {
@@ -1331,6 +1563,8 @@ void moveMonsters() {
         }
     }
 }
+
+void loseGame();
 
 void moveTo(short y, short x, short skip) {
     if (match.hunger < 30 && match.intermission <= 0) {
@@ -1392,7 +1626,8 @@ void moveTo(short y, short x, short skip) {
         } break;
         case 21: {
             gPrompt("You are caught by a trap!");
-            match.health -= match.difficulty + 1;
+            battle();
+            // match.health -= match.difficulty + 1;
             match.maps[match.level][y][x] = 22;
         } break;
         case 25:
@@ -1486,6 +1721,7 @@ void moveTo(short y, short x, short skip) {
     }
 
     printMap(match.maps[match.level], match.level, 0);
+    if (match.health < 0) loseGame();
 }
 
 void fastmove(short x, short y) {
@@ -1513,7 +1749,11 @@ void attack(short prev) {
         case 1:
         case 2: {
             short state = 1;
-            for (short i = 0; i < match.monss; i++) {
+
+            int counter = match.level == 5 ? 190:0;
+            int moCount = match.level == 5 ? 210:match.monss;
+            
+            for (short i = counter; i < moCount; i++) {
                 if (match.mons[i].level == match.level + 1 &&
                     abs(match.mons[i].pos.x-match.pos.x) <= 1 &&
                     abs(match.mons[i].pos.y-match.pos.y) <= 1) {
@@ -1524,6 +1764,7 @@ void attack(short prev) {
                     gPrompt(message);        
                     if (match.mons[i].health == 0) {
                         match.mons[i].type = 0;
+
                     }
                     state = 0;
                 }
@@ -1873,16 +2114,53 @@ void saveFile(char name[]) {
             return;
         }
         else if (fwrite(&match, sizeof(struct game), 1, fptr)) {
-            FILE *log = fopen("games_saved/games.txt", "a");
-            char line[50];
-            sprintf(line, "%s %s", player.username, name);
-            if (fprintf(log, "\n%s %s", player.username, name)) {
-                Prompt("Game saved successfully!");
-                fclose(log);
-                fclose(fptr);
-                return;
+            FILE *log;
+            log = fopen("games_saved/games.txt", "r");
+            char line[100], state = 1;
+            while (state && fgets(line, 50, log)) {
+                line[strcspn(line, "\n")] = 0;
+
+                if (*line == 0) continue;
+                char *username, *id;
+                // sscanf("%s %s", username, id);
+                username = strtok(line, " ");
+                id = strtok(NULL, " ");
+                // sscanf(line, "%s %s", username, id);
+                // char c[100];
+                // sprintf(c, "%s %s %d", username, id, 5);
+                // Prompt(c);
+                // while (true) {
+                //     char c = getch();
+                //     if (c) break;
+                // }
+                // sprintf(line, "%s %s %d %d", username, id, 5, strcmp(id, name)==0);
+                // Prompt(line);
+                // while (1) {
+                //     char c = getch();
+                //     if (c) break;
+                // }
+                if (strcmp(username, player.username)==0 && strcmp(id, name)==0) {
+                    state = 0;
+                    Prompt("Game Updated & Saved Successfully!");
+                    // break;
+                }
+                
             }
             fclose(log);
+            if (state) {
+                log = fopen("games_saved/games.txt", "a");
+                char line[50];
+                sprintf(line, "%s %s", player.username, name);
+                if (fprintf(log, "\n%s %s", player.username, name)) {
+                    Prompt("Game saved successfully!");
+                    fclose(log);
+                    fclose(fptr);
+                    return;
+                }
+                fclose(log);
+            } else {
+                return;
+            }
         }
         fclose(fptr);
         Prompt("Unknown Error; play a bit longer and retry!");
@@ -1956,8 +2234,61 @@ void treasureRoom() {
         }
     }
 }
+void mainMenu();
 
-void endGame() {
+void deleteSave() {
+    if (*fileId == 0) return;
+    FILE *fptr, *temp;
+    fptr = fopen("games_saved/games.txt", "r");
+    temp = fopen("games_saved/temp.txt", "w");
+    char line[200], user[20], id[30];
+    short i = 0;
+    while (fgets(line, 200, fptr)) {
+        line[strcspn(line, "\n")] = 0;
+        if (line[0] == 0) continue;
+        i++;
+        sscanf(line, "%s %s", user, id);
+        if (strcmp(player.username, user) || strcmp(fileId, id))  {
+            line[strlen(line)] = '\n';
+            fputs(line, temp);
+        }
+    }
+    fclose(fptr);
+    fclose(temp);
+    
+    fptr = fopen("games_saved/games.txt", "w");
+    temp = fopen("games_saved/temp.txt", "r");
+    while (fgets(line, 200, temp)) {
+        fputs(line, fptr);
+    }
+    fclose(temp);
+    fclose(fptr);
+    sprintf(line, "games_saved/%s$%s.bin", player.username, fileId);
+    remove(line);
+}
+
+void loseGame() {
+    deleteSave();
+    endwin();
+    initSCR();
+    char c, line[118];
+    short x, y;
+    getmaxyx(stdscr, y, x);
+    sprintf(line, "Thanks for playing! Game Is Over, Not Your Life, Though! Press Enter To Go Back To The Start Menu");
+    mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+    while (1) {
+        c = getch();
+        if (c == ' ') {
+            clear();
+            endwin();
+            mainMenu();
+            return;
+        }
+    }
+}
+
+void winGame() {
+    deleteSave();
     if (player.anonymous) {
         endwin();
         initSCR();
@@ -1966,6 +2297,15 @@ void endGame() {
         getmaxyx(stdscr, y, x);
         sprintf(line, "Thanks for playing! The game is ended, press Space to see the ranking! (You're not ranked since you're not logged in)");
         mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+        while (1) {
+            c = getch();
+            if (c == ' ') {
+                clear();
+                endwin();
+                Ranking();
+                return;
+            }
+        }
     } else {
         FILE *fptr, *temp;
         fptr = fopen("data/users.txt", "r");
@@ -2025,7 +2365,127 @@ void endGame() {
 
 
 
+short bplay() {
+    char prev;
+    while (1) {
+        short i = 0, j = 0;
+        // usleep(gDELAY);
+        // gendTime();
+        char c = getch();
+        if (c) {
+            switch(c) {
+                case ES: {
+                    clear();
+                    pauseMenu();
+                    return bplay();
+                } break;
+                case UA:
+                case 'j':
+                case 'J':
+                case '8':
+                // case '^[[A':
+                    j = -2;
+                case DA:
+                case 'k':
+                case 'K':
+                case '2':
+                // case '^[[B':
+                    j++;
+                case LA:
+                case 'h':
+                case 'H':
+                case '4':
+                // case '^[[D':
+                    i = -2;
+                case RA:
+                case 'l':
+                case 'L':
+                case '6':
+                // case '^[[C': 
+                {
+                    i++;
+                    if (j != 0) i++;
+                    if (prev == 'f' || prev == 'F') fastmove(i,j);
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                        moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
+                    else gPrompt("Impossible move!");
+                } break;
+
+                case '7':
+                case 'y':
+                case 'Y':
+                // case '^[[H': 
+                    i = -2;
+                case '9':
+                case 'u':
+                case 'U':
+                // case '^55~':
+                {
+                    i += 2;
+                    j -= 2;
+                }
+                case 'b':
+                case 'B':
+                case '1':
+                // case '^[[F': 
+                    i -= 2;
+                case '3':
+                case 'N':
+                case 'n':
+                // case '^[[6~':
+                {
+                    i++;
+                    j++;
+                    if (prev == 'f' || prev == 'F') fastmove(i,j);
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                        moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
+                    else gPrompt("Impossible move!");
+                } break;
+                case 'a': {
+                    if (match.equArm) attack(1);
+                    else gPrompt("You have no weapon wielded!");
+                } break;
+                case ' ': {
+                    if (match.equArm) {
+                        attack(0);
+                        break;
+                    }
+                }
+                case '5': {
+                    moveTo(match.pos.y, match.pos.x, 0);
+                    i = 1;
+                }
+                case 'E':
+                case 'e': {
+                    clear();
+                    foodMenu(i);
+                } break;
+                case 'i':
+                case 'I': {
+                    clear();
+                    armMenu();
+                } break;
+                case 'O':
+                case 'o': {
+                    clear();
+                    elixirMenu(0);
+                } break;
+                
+            }
+        }
+        if (c==27) {endwin(); break;}
+        if (c) prev = c;
+        printMap(match.maps[match.level], match.level, 1);
+        short state = 1;
+        for (short i = 190; i < 210; i++) {
+            if (match.mons[i].type) state = 0;
+        } 
+        if (state) return 1;
+    }
+}
+
 short gplay() {
+    // battle();
     char prev;
     while (1) {
         short i = 0, j = 0;
@@ -2156,7 +2616,7 @@ short gplay() {
                             clear();
                             // endwin();
                             treasureRoom();
-                            // endGame();
+                            // winGame();
                             // while (1) {}
                             // return 0;
                         }

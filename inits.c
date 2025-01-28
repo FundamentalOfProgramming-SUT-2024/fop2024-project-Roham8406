@@ -1,5 +1,6 @@
-/*version 1.3.0*/
+/*version 1.6.0*/
 #include <ncurses.h>
+#include <locale.h>
 #include <time.h>
 
 #define UA 3
@@ -360,6 +361,7 @@ void hash(char txt[]) {
 
 
 void initSCR() {
+    // setlocale(LC_ALL, "");
     initscr();
     curs_set(FALSE);
     keypad(stdscr, TRUE);

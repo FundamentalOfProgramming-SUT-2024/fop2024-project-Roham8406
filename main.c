@@ -506,10 +506,7 @@ void continueForm() {
     }
 }
 
-void printRanking(struct gamers li[], short offset) {
-    /*
-    Unable of adding emoji;
-    */
+void printRanking(struct gamers li[], short offset, short self) {
     int row, col;
     getmaxyx(stdscr, row, col);
     attron(COLOR_PAIR(100));
@@ -526,16 +523,16 @@ void printRanking(struct gamers li[], short offset) {
         switch (i) {
             case 0: {                
                 attron(COLOR_PAIR(101));
-                mvprintw(3+i-offset,1,"%s", "G");
+                mvprintw(3+i-offset,1,"%s", "\U0001F3C6");
             } break;
             case 1: {
                 attron(COLOR_PAIR(102));
-                mvprintw(3+i-offset,1,"S");
+                mvprintw(3+i-offset,1,"\U0001F948");
 
             } break;
             case 2: {
                 attron(COLOR_PAIR(103));
-                mvprintw(3+i-offset,1,"B");
+                mvprintw(3+i-offset,1,"\U0001F949");
 
             } break;
             default: {
@@ -545,7 +542,7 @@ void printRanking(struct gamers li[], short offset) {
                 else attron(COLOR_PAIR(105));
             }
         }
-        if (1-player.anonymous && !strcmp(player.username, li[i].username)) {
+        if (i == self) {
             attron(A_BOLD);
             attron(A_ITALIC);
             attron(A_STANDOUT);
@@ -558,7 +555,7 @@ void printRanking(struct gamers li[], short offset) {
         mvprintw(3+i-offset,40,"%d", li[i].points);
         mvprintw(3+i-offset,50,"%d", li[i].golds);
         mvprintw(3+i-offset,60,"%hd", li[i].matches);
-        mvprintw(3+i-offset,70,"%d", li[i].time/60/60/24);
+        mvprintw(3+i-offset,70,"%ld", li[i].time/60/60/24);
         attroff(A_ITALIC);
         attroff(A_BOLD);
         attroff(A_STANDOUT);
@@ -579,6 +576,7 @@ void Ranking() {
     FILE *fptr;
     fptr = fopen("data/users.txt", "r");
     char line[200];
+    fgets(line, 200, fptr);
     while (fgets(line, 200, fptr)) {
         if (line[0] == '\0') continue;
         sscanf(line, "%s %s %s %d %d %hd %llu", username, unwanted, unwanted, &points, &golds, &matches, &tim);
@@ -601,12 +599,20 @@ void Ranking() {
             }
         }
     }
+    short j = -1;
+    if (1-player.anonymous) {
+        for (; j < i; j++) {
+            if (!strcmp(player.username, li[j].username)) {
+                break;
+            }
+        }
+    }
     strcat(li[0].username, " the Greatest");
     strcat(li[1].username, " the Greater");
     strcat(li[2].username, " the Great");
     short offset = 0, row = getmaxy(stdscr);
     while (1) {
-        printRanking(li, offset);
+        printRanking(li, offset, j);
         char c = getch();
         switch(c) {
             case ES: {
@@ -806,6 +812,16 @@ void mainMenu() {
 
 
 int main () {
+    setlocale(LC_ALL, "en_US.UTF-8");
+
+    // initscr();
+    // while (1) {
+    //     char c;
+    //     c = getch();
+    //     if (c) {
+    //         mvprintw(1,1,"☻");
+    //     }
+    // }
     inits();    
     mainMenu();   
     return 0;

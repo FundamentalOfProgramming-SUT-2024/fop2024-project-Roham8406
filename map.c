@@ -39,7 +39,7 @@ struct gamers {
     int points;
     int golds;
     short matches;
-    short time;
+    long time;
 };
 
 
@@ -244,11 +244,16 @@ void insertMap(char map[MAXy][MAXx], room rooms[12], char map2[MAXy][MAXx]) {
     }
 
     for (short i = 0; i < 12 && rooms[i].state; i++) {
+        map[rooms[i].tl.y][rooms[i].tl.x] = 1;
+        map[rooms[i].tl.y][rooms[i].br.x] = 2;
+        map[rooms[i].br.y][rooms[i].tl.x] = 3;
+        map[rooms[i].br.y][rooms[i].br.x] = 4;
+        
         for (short j = rooms[i].tl.x + 1; j < rooms[i].br.x; j++) {
             map[rooms[i].tl.y][j] = 5;
             map[rooms[i].br.y][j] = 5;
         }
-        for (short j = rooms[i].tl.y + 1; j <= rooms[i].br.y; j++) {
+        for (short j = rooms[i].tl.y + 1; j < rooms[i].br.y; j++) {
             map[j][rooms[i].tl.x] = 6;
             map[j][rooms[i].br.x] = 6;
         }
@@ -1012,56 +1017,58 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         }
         
     }
-    short i = rand() % k;
-    map[rooms[i].tl.y + 1 + rand() % (rooms[i].br.y-3-rooms[i].tl.y)][rooms[i].tl.x +1+ rand() % (rooms[i].br.x-3-rooms[i].tl.x)] = 39;
-    
-    if (level) map[stair->y][stair->x] = 24;
-    short r;
-    short exe = 200;
-    // if (level == 4) {
-    //     if (isIn(rooms[5].tl, *stair, rooms[5].br)) r = 4; else r = 5;
-    // } else {
-        do {
-            r = rand() % k;
-        } while (isIn(rooms[k].tl, *stair, rooms[k].br) && exe--);
-    // }
-    stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
-    stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);
-    map[stair->y][stair->x] = level == 4 ? 45 : 23;
-    *first = rooms[r];
-    for (short i = 0; i < 12 && rooms[i].state; i++) {
-        if (rooms[i].doors[1].type == 4) {
-            int j = rand() % 4;
-            switch (j) {
-                case 0: map[rooms[i].tl.y+1][rooms[i].tl.x+1] = 14; break;
-                case 1: map[rooms[i].tl.y+1][rooms[i].br.x-1] = 14; break;
-                case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
-                case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
-            }
-            rooms[i].pwd = rand() % 1000;
-            rooms[i].mirror = rand()%3 ? 1 : 0;
-            rooms[i].lockState = 0;
-            if (level < 3 || rand()%(5-match.difficulty)) {
-                if (rand() % (4-match.difficulty)) rooms[i].lockDT = 1;
-                else {
-                    rooms[i].lockDT = 10 + rand() % 30;
-                }
-            } else {
-                int k;
-                do {k = rand() % 4;} while (k == j);
-                switch (k) {
+    if (level != 5) {
+
+        short i = rand() % k;
+        map[rooms[i].tl.y + 1 + rand() % (rooms[i].br.y-3-rooms[i].tl.y)][rooms[i].tl.x +1+ rand() % (rooms[i].br.x-3-rooms[i].tl.x)] = 39;
+        
+        if (level) map[stair->y][stair->x] = 24;
+        short r;
+        short exe = 200;
+        // if (level == 4) {
+        //     if (isIn(rooms[5].tl, *stair, rooms[5].br)) r = 4; else r = 5;
+        // } else {
+            do {
+                r = rand() % k;
+            } while (isIn(rooms[k].tl, *stair, rooms[k].br) && exe--);
+        // }
+        stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
+        stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);
+        map[stair->y][stair->x] = level == 4 ? 45 : 23;
+        *first = rooms[r];
+        for (short i = 0; i < 12 && rooms[i].state; i++) {
+            if (rooms[i].doors[1].type == 4) {
+                int j = rand() % 4;
+                switch (j) {
                     case 0: map[rooms[i].tl.y+1][rooms[i].tl.x+1] = 14; break;
                     case 1: map[rooms[i].tl.y+1][rooms[i].br.x-1] = 14; break;
                     case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
                     case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
                 }
-                rooms[i].lockDT =  2;
+                rooms[i].pwd = rand() % 1000;
+                rooms[i].mirror = rand()%3 ? 1 : 0;
+                rooms[i].lockState = 0;
+                if (level < 3 || rand()%(5-match.difficulty)) {
+                    if (rand() % (4-match.difficulty)) rooms[i].lockDT = 1;
+                    else {
+                        rooms[i].lockDT = 10 + rand() % 30;
+                    }
+                } else {
+                    int k;
+                    do {k = rand() % 4;} while (k == j);
+                    switch (k) {
+                        case 0: map[rooms[i].tl.y+1][rooms[i].tl.x+1] = 14; break;
+                        case 1: map[rooms[i].tl.y+1][rooms[i].br.x-1] = 14; break;
+                        case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
+                        case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
+                    }
+                    rooms[i].lockDT =  2;
+                }
+            } else {
+                rooms[i].lockDT = 0;
             }
-        } else {
-            rooms[i].lockDT = 0;
         }
-    }
-        
+    }    
 
     return sum;
 }
@@ -1093,7 +1100,8 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
             short reveal = cheat == 1;
-            int ch, cr, cr2 = -1;
+            int cr, cr2 = -1;
+            char ch[5];
             pair temp = {j, i};
             int type = roomFinder(match.rooms[level], temp);
             
@@ -1121,64 +1129,68 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
             if (reveal) {
                 if ((abs(match.pos.y - i) > 5 || abs(match.pos.x - j) > 5) && cheat == 2) cheat = 0;
                 switch(map[i][j]) {
-                    case 0: ch = ' '; cr2 = 26; break;
-                    case 5: ch = '_'; cr = 0; break;
-                    case 6: ch = '|'; cr = 0; break;
-                    case 7: ch = '.'; cr = 1; break;
-                    case 8: ch = '+'; cr = 0; break;
-                    // case 9: ch = '?'; cr = 0; break;
-                    case 9: ch = cheat == 2 ? '?' : (map[i-1][j] == 6 || map[i+1][j] ==  6) ? '|' : '_'; cr = 0; break;
-                    case 10: ch = '?'; cr = 0; break;
-                    case 11: ch = '@'; cr2 = 27; break;
-                    case 12: ch = '@'; cr2 = 28; break;
-                    case 13: ch = '#'; cr2 = 29; break;
-                    case 14: ch = '&'; cr = 5; break;
-                    case 20: ch = 'O'; cr = 0; break;
-                    case 21: ch = cheat == 2 ? '^' : '.'; cr = 1; break;
-                    case 22: ch = '^'; cr = 1; break;
-                    case 23: ch = '>'; cr = 2; break;
-                    case 24: ch = '<'; cr = 2; break;
+                    case 0: strcpy(ch, " "); cr2 = 26; break;
+                    case 1: strcpy(ch, "\u2554"); cr = 0; break;
+                    case 2: strcpy(ch, "\u2557"); cr = 0; break;
+                    case 3: strcpy(ch, "\u255A"); cr = 0; break;
+                    case 4: strcpy(ch, "\u255D"); cr = 0; break;
+                    case 5: strcpy(ch, "\u2550"); cr = 0; break;
+                    case 6: strcpy(ch, "\u2551"); cr = 0; break;
+                    case 7: strcpy(ch, "."); cr = 1; break;
+                    case 8: strcpy(ch, "\u256C"); cr = 0; break;
+                    // case 9: strcpy(ch, "?"); cr = 0; break;
+                    case 9: strcpy(ch, cheat == 2 ? "?" : (map[i-1][j] == 6 || map[i+1][j] ==  6) ? "\u2551" : "\u2550"); cr = 0; break;
+                    case 10: strcpy(ch, "?"); cr = 0; break;
+                    case 11: strcpy(ch, "@"); cr2 = 27; break;
+                    case 12: strcpy(ch, "@"); cr2 = 28; break;
+                    case 13: strcpy(ch, "#"); cr2 = 29; break;
+                    case 14: strcpy(ch, "&"); cr = 5; break;
+                    case 20: strcpy(ch, "O"); cr = 0; break;
+                    case 21: strcpy(ch, cheat == 2 ? "^" : "."); cr = 1; break;
+                    case 22: strcpy(ch, "^"); cr = 1; break;
+                    case 23: strcpy(ch, ">"); cr = 2; break;
+                    case 24: strcpy(ch, "<"); cr = 2; break;
                     case 25:
-                    case 28: ch = 'f'; cr = 6; break;
-                    case 26: ch = 'e'; cr = 6; break;
-                    case 27: ch = 'm'; cr = 6; break;
-                    case 29: ch = 'g'; cr = 4; break;
-                    case 30: ch = 'B'; cr = 3; break;
-                    case 31: ch = 'M'; cr = 5; break;
-                    case 32: ch = 's'; cr = 5; break;
+                    case 28: strcpy(ch, "f"); cr = 6; break;
+                    case 26: strcpy(ch, "e"); cr = 6; break;
+                    case 27: strcpy(ch, "m"); cr = 6; break;
+                    case 29: strcpy(ch, "g"); cr = 4; break;
+                    case 30: strcpy(ch, "B"); cr = 3; break;
+                    case 31: strcpy(ch, "\u2692"); cr = 5; break;
+                    case 32: strcpy(ch, "\u2694"); cr = 5; break;
                     case 33:
-                    case 36: ch = 'd'; cr = 5; break;
+                    case 36: strcpy(ch, "\U0001F5E1"); cr = 5; break;
                     case 34:
-                    case 37: ch = 'W'; cr = 5; break;
+                    case 37: strcpy(ch, "\u269A"); cr = 5; break; //1FA70
                     case 35:
-                    case 38: ch = 'A'; cr = 5; break;
-                    case 46: ch = 'H'; cr = 7; break;
-                    case 47: ch = 'X'; cr = 7; break;
-                    case 48: ch = 'E'; cr = 7; break;
-                    case 39: ch = 'K'; cr = 5; break;
-                    // case 40: ch = 'D'; cr = 8; break;
-                    // case 41: ch = 'F'; cr = 8; break;
-                    // case 42: ch = 'G'; cr = 8; break;
-                    // case 43: ch = 'S'; cr = 8; break;
-                    // case 44: ch = 'U'; cr = 8; break;
-                    case 45: ch = 'T'; cr = 2; break;
+                    case 38: strcpy(ch, "\u27B3"); cr = 5; break;
+                    case 46: strcpy(ch, "H"); cr = 7; break;
+                    case 47: strcpy(ch, "X"); cr = 7; break;
+                    case 48: strcpy(ch, "E"); cr = 7; break;
+                    case 39: strcpy(ch, "\u26B7"); cr = 5; break; //1403
+                    // case 40: strcpy(ch, "D"); cr = 8; break;
+                    // case 41: strcpy(ch, "F"); cr = 8; break;
+                    // case 42: strcpy(ch, "G"); cr = 8; break;
+                    // case 43: strcpy(ch, "S"); cr = 8; break;
+                    // case 44: strcpy(ch, "U"); cr = 8; break;
+                    case 45: strcpy(ch, "T"); cr = 2; break;
 
-                    defualt: ch = ' '; cr2 = 26; break;
+                    defualt: strcpy(ch, " "); cr2 = 26; break;
 
                 }
             } else {
-                ch = ' '; cr2 = 26;
+                strcpy(ch, " "); cr2 = 26;
             }
             if (cr2 != -1){
                 attron(COLOR_PAIR(cr2));
             } else {
                 attron(COLOR_PAIR(cr+type*10 + 20));
             }
-            mvprintw(i+2,j,"%c", ch);
+            mvprintw(i+2,j,"%s", ch);
         }
     }
     attron(COLOR_PAIR(80 + match.colour));
-    mvprintw(2+match.pos.y, match.pos.x, "!");
+    mvprintw(2+match.pos.y, match.pos.x, "%s", "\u265A");
     attroff(A_BOLD);
     pair node = {match.pos.x, match.pos.y};
     short roomIn = roomFinder(match.rooms[level], node);
@@ -1721,7 +1733,7 @@ void moveTo(short y, short x, short skip) {
     }
 
     printMap(match.maps[match.level], match.level, 0);
-    if (match.health < 0) loseGame();
+    // if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
 }
 
 void fastmove(short x, short y) {
@@ -1739,6 +1751,8 @@ void fastmove(short x, short y) {
         if (state) moveTo(match.pos.y + y, match.pos.x + x, 0);
     }
 }
+
+void winGame();
 
 void attack(short prev) {
     char strength[5] = {5,10,12,15,5};
@@ -1870,7 +1884,9 @@ void attack(short prev) {
                                 sprintf(message, "You hit the %s, it's health is %d as of now!", li[match.mons[i].type-1], match.mons[i].health);
                                 gPrompt(message);        
                                 if (match.mons[i].health == 0) {
+                                    sprintf(message, "You killed the %s!", li[match.mons[i].type-1]);
                                     match.mons[i].type = 0;
+                                    gPrompt(message);
                                 }
                                 state = 0;
                                 state2 = 0;
@@ -1891,6 +1907,18 @@ void attack(short prev) {
             if (state) match.maps[match.level][y][x] = match.equArm + 33;
         }
     }
+    short state = 1;
+    if (match.level == 4) {
+        for (short i = 0; i < match.monss; i++) {
+            if (match.mons[i].level == 5 && match.mons[i].type != 0) {
+                state = 0;
+                break;
+            }
+        }
+    } else {
+        state = 0;
+    }
+    if (state) winGame();
 
 }
 

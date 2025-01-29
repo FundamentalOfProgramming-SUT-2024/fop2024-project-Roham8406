@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.1*/
 #include "map.c"
 
 void mainMenu();
@@ -479,6 +479,12 @@ void continueForm() {
     butts[0].state = 1;
     
     short state = 1, active = 0;
+    if (i == 0) {
+        butts[i].type = 0;
+        strcpy(butts[i].label, "No File To Load...");
+        strcpy(butts[i].value, "0");
+        i++;
+    }
     while (state) {
         int ind = menu(butts, i, 1, active, "Continue Game Id: ",1);
         if (ind == 0) {
@@ -520,6 +526,7 @@ void printRanking(struct gamers li[], short offset, short self) {
     for (short i = offset; i < row + offset - 3; i++) {
         attron(A_UNDERLINE);
         attron(A_ITALIC);
+        short type = 1;
         switch (i) {
             case 0: {                
                 attron(COLOR_PAIR(101));
@@ -540,6 +547,7 @@ void printRanking(struct gamers li[], short offset, short self) {
                 attroff(A_ITALIC);
                 if (i%2) attron(COLOR_PAIR(104));
                 else attron(COLOR_PAIR(105));
+                type = 0;
             }
         }
         if (i == self) {
@@ -551,7 +559,22 @@ void printRanking(struct gamers li[], short offset, short self) {
             }
         }
         mvprintw(3+i-offset,0,"%d",i+1);
-        mvprintw(3+i-offset,7,"%s", li[i].username);
+        if (type) {
+            char upper[26][5] = {"Ⓐ","Ⓑ","Ⓒ","Ⓓ","Ⓔ","Ⓕ","Ⓖ","Ⓗ","Ⓘ","Ⓙ","Ⓚ","Ⓛ","Ⓜ",
+                                 "Ⓝ","Ⓞ","Ⓟ","Ⓠ","Ⓡ","Ⓢ","Ⓣ","Ⓤ","Ⓥ","Ⓦ","Ⓧ","Ⓨ","Ⓩ"};
+            char lower[26][5] = {"ⓐ","ⓑ","ⓒ","ⓓ","ⓔ","ⓕ","ⓖ","ⓗ","ⓘ","ⓙ","ⓚ","ⓛ","ⓜ",
+                                 "ⓝ","ⓞ","ⓟ","ⓠ","ⓡ","ⓢ","ⓣ","ⓤ","ⓥ","ⓦ","ⓧ","ⓨ","ⓩ"};
+            char digit[10][5] = {"⓪","①","②","③","④","⑤","⑥","⑦","⑧","⑨"};
+            char under[5] = "␥";
+            for (short j = 0; li[i].username[j] != '\0'; j++) {
+                if      (li[i].username[j] >= 'A' && li[i].username[j] <= 'Z') mvprintw(3+i-offset,7+j,"%s", upper[li[i].username[j]-'A']);
+                else if (li[i].username[j] >= 'a' && li[i].username[j] <= 'z') mvprintw(3+i-offset,7+j,"%s", lower[li[i].username[j]-'a']);
+                else if (li[i].username[j] >= '0' && li[i].username[j] <= '9') mvprintw(3+i-offset,7+j,"%s", digit[li[i].username[j]-'0']);
+                else if (li[i].username[j] == '_')                             mvprintw(3+i-offset,7+j,"%s", under);
+                else mvprintw(3+i-offset,7+j,"%c", li[i].username[j]);
+            }
+        } 
+        else mvprintw(3+i-offset,7,"%s", li[i].username);
         mvprintw(3+i-offset,40,"%d", li[i].points);
         mvprintw(3+i-offset,50,"%d", li[i].golds);
         mvprintw(3+i-offset,60,"%hd", li[i].matches);

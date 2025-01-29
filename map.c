@@ -1,4 +1,4 @@
-/* ver: 1.4.0 */
+/* ver: 1.6.0 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -146,6 +146,7 @@ struct game match;
 struct track tracks[MUSICS];
 time_t seen;
 char fileId[50] = "";
+char death = 0;
 
 
 
@@ -468,6 +469,7 @@ void monsAttack(short type) {
     char li[5][30] = {"Deamon", "Fire Breathing Monstor", "Giant", "Snake", "Undeed"};
     char temp[65];
     sprintf(temp, "You Are Being Attacked By The %s!", li[type-1]);
+    death = type;
     gPrompt(temp);
 }
 
@@ -1088,11 +1090,16 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     // mvprintw(1,1,"%d", count);
     char li[5][15] = {"Mace", "Sword", "Dagger", "Magic Wand", "Normal Arrow"};
 
-    char invents[MAXx];
+    char invents[2*MAXx];
+    char health[80] = "", hunger[50] = "";
+    for (short i = 0; i < 20; i++) {
+        strcat(health, (match.health >= (i+1) * 5) ? "\u2588": "\u2591"); 
+        strcat(hunger, (match.hunger >= (i+1) * 5) ? "\u2588": "\u2591"); 
+    }
     if (match.equArm) {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %d\tHunger: %d\tLevel: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], match.health, match.hunger, match.level);
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], health, hunger, match.level);
     } else {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %d\tHunger: %d\tLevel: %d", match.gold, match.key, match.brKey, match.health, match.hunger, match.level);
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, health, hunger, match.level);
     }
     attron(COLOR_PAIR(4));
     mvprintw(1, 4, "%s", invents);
@@ -1205,6 +1212,64 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
         }
     }
     attroff(COLOR_PAIR(3));
+}
+
+void help () {
+    char info[31][60] = {
+        "Keys: ",
+        "Esc\t\t\tPause ",
+        "Arrow Up\t\tUp\t\t\t\tArrow Down\t\tDown ",
+        "J\t\t\tUp\t\t\t\tK\t\t\tDown ",
+        "8\t\t\tUp\t\t\t\t2\t\t\tDown ",
+        "Arrow Left\t\tLeft\t\t\t\tArrow Right\t\tRight ",
+        "H\t\t\tLeft\t\t\t\tL\t\t\tRight ",
+        "4\t\t\tLeft\t\t\t\t6\t\t\tRight ",
+        "Y\t\t\tTop Left\t\t\tU\t\t\tTop Right ",
+        "7\t\t\tTop Left\t\t\t9\t\t\tTop Right ",
+        "B\t\t\tBottom Left\t\t\tN\t\t\tBottom Right ",
+        "1\t\t\tBottom Left\t\t\t3\t\t\tBottom Right ",
+        "F\t\t\tFast Move\t\t\tSpace\t\t\tAttack / Pick ",
+        "G\t\t\tMove Without Picking\t\t<Direction>\t\tDirect the Attack ",
+        "5\t\t\tPick\t\t\t\tI\t\t\tWeapon Menu ",
+        "E\t\t\tFood Menu\t\t\tO\t\t\tElixir Menu ",
+        "M\t\t\tShow Map\t\t\tS\t\t\tScan ",
+        "K\t\t\tUse Ancient Key",
+        "",
+        "Symbols: ",
+        "\u265A\t\tHero ",
+        "\u2551\t\tDoor\t\t\t\t^\t\tKnown Trap\t\t\t@\t\tLockable Door ",
+        ".\t\tFloor\t\t\t\t?\t\tHidden Door\t\t\t&\t\tPassword Revealer ",
+        "O\t\tPile\t\t\t\tSpace\t\tVoid Space\t\t\t\u2692\t\tMace ",
+        ">\t\tUpstairs\t\t\tf\t\tRegular/Rotten Food\t\t\u2694\t\tSword ",
+        "<\t\tDownstairs\t\t\te\t\tExcelent Food\t\t\t\U0001F5E1\t\tDagger ",
+        "T\t\tTreasure\t\t\tm\t\tMagical Food\t\t\t\u269A\t\tWand ",
+        "\u26B7\t\tAncient Key\t\t\tD\t\tDeamon\t\t\t\t\u27B3\t\tArrow ",
+        "H\t\tHealth Elixir\t\t\tF\t\tDragon\t\t\t\tU\t\tUndeed ",
+        "X\t\tStrength Elixir\t\t\tG\t\tGiant ",
+        "E\t\tSpeed Elixir\t\t\tS\t\tSnake"
+    };
+    short x, y;
+    getmaxyx(stdscr, y, x);
+    for (short i = 0; i < x; i++) {
+        for (short j = 0; j < y; j++) {
+            mvprintw(j, i, " ");
+        }
+    }
+    for (short i = 0; i < 31; i++) {
+        mvprintw(y/2 - 15 + i, 3, "%s", info[i]);
+    }
+    while (1) {
+        char c;
+        c = getch();
+        if (c == ES) {
+            for (short i = 0; i < x; i++) {
+                for (short j = 0; j < y; j++) {
+                    mvprintw(j, i, " ");
+                }
+            }
+            return;
+        }; 
+    }
 }
 
 void mapCreator() {
@@ -1440,7 +1505,8 @@ short pwd(short state, short counter) {
                         nums[counter]%=10;
                     }
                 } break;
-                case 'k': {
+                case 'k':
+                case 'K': {
                     if (match.key) {
                         if (rand()%10) {
                             gPrompt("You used an ancient key!");
@@ -1517,7 +1583,7 @@ short moveCheck(char map[MAXy][MAXx], short y, short x, short cy, short cx) {
 }
 
 void moveMonster(short i) {
-    /* Snake Starts Chasing Before Being Seen*/
+    /* Snake sometimes gets further*/
 
     if (abs(match.mons[i].pos.x - match.pos.x) <= 1 &&
         abs(match.mons[i].pos.y - match.pos.y) <= 1) {
@@ -1579,6 +1645,7 @@ void moveMonsters() {
 void loseGame();
 
 void moveTo(short y, short x, short skip) {
+    death = 0;
     if (match.hunger < 30 && match.intermission <= 0) {
         if (match.heal > 0) match.health += 2;
         else match.health ++;
@@ -1733,7 +1800,7 @@ void moveTo(short y, short x, short skip) {
     }
 
     printMap(match.maps[match.level], match.level, 0);
-    // if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
+    if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
 }
 
 void fastmove(short x, short y) {
@@ -1970,20 +2037,20 @@ void foodMenu(short i) {
                         break;
                     case 1: {
                         match.foods[ind-1].type = 0;
-                        match.health += 30;
+                        match.health += 50;
                         match.hunger -= 30;
                         Prompt("You ate a Regular Food!");
                     } break;
                     case 2: {
                         match.foods[ind-1].type = 0;
-                        match.health += 30;
+                        match.health += 50;
                         match.hunger -= 30;
                         match.strength += 15;
                         Prompt("You ate an Excellent Food!");
                     } break;
                     case 3: {
                         match.foods[ind-1].type = 0;
-                        match.health += 30;
+                        match.health += 50;
                         match.hunger -= 30;
                         match.fast += 20;
                         Prompt("You ate a Magical Food!");
@@ -2219,10 +2286,15 @@ void pauseMenu() {
         i = 3;
         initInp(butts[1].value, 100);
     }
-    strcpy(butts[i].label, "Exit");
+    strcpy(butts[i].label, "Help");
     butts[i].type = 0;
     butts[i].state = 0;
     strcpy(butts[i].value, "3");
+    i++;
+    strcpy(butts[i].label, "Exit");
+    butts[i].type = 0;
+    butts[i].state = 0;
+    strcpy(butts[i].value, "4");
     
     short state = 1, active = 0;
     while (state) {
@@ -2239,10 +2311,13 @@ void pauseMenu() {
                 active = 2;
             } break;
             case 3: {
+                help();
+            } break;
+            case 4: {
                 if (confirm()) {
                     endwin();
-                    abort();
-                    printf("Thanks for playing");
+                    death = -1;
+                    loseGame();
                     return;
                 }
             }
@@ -2300,10 +2375,64 @@ void loseGame() {
     endwin();
     initSCR();
     char c, line[118];
+    char ascii[31][101] = {
+        "          ________________________                                  _                              ",
+        "         /                        \\                                ...                             ",
+        "        /                          \\                             ;::::;                            ",
+        "       /           R.I.P.           \\                          ;::::; :;                           ",
+        "      /      ~~~~~~~~~~~~~~~~~       \\                       ;:::::'   :;                          ",
+        "     |    /|\\                 /|\\     |                     ;:::::;     ;.                         ",
+        "     |     |                   |      |                    ,:::::'       ;           OOO\\          ",
+        "     |     |    Beloved Soul   |      |                    ::::::;       ;          OOOOO\\         ",
+        "     |     |                   |      |                    ;:::::;       ;         OOOOOOOO        ",
+        "     |     |                   |      |                   ,;::::::;     ;'         / OOOOOOO       ",
+        "     |     |                   |      |                  ;:::::::::`. ,,,;.       /  / DOOOOOO     ",
+        "     |     |     Gone but      |      |                .';:::::::::::::::::;,    /  /     DOOOO    ",
+        "     |     |  Never Forgotten  |      |               ,::::::;::::::;;;;::::;,  /  /        DOOO   ",
+        "     |     |                   |      |              ;::::::'::::::;;;::::: ,# /  /        DOOOO   ",
+        "     |     |      <Death>      |      |              ::::::::;::::::;;::: ;::#/  /          DOOO   ",
+        "     |     |___________________|      |              :::::::::;:::::::: ;::::#  /            DOO   ",
+        "     |   *      *       *      *      |              ::::::::`;:::::: ;::::::# /             DOO   ",
+        "     |     ***        ***        o    |               ::::::::::;; ;:::::::::##               OO   ",
+        "     |  o  ***  o  o  ***     o    o  |               :::::::::::;::::::::;:::#               OO   ",
+        "     |     ***        ***        o    |               :::::::::::::::::;'`:;::#               O    ",
+        "     |   *      *       *      *      |                :::::::::::::;' /  / `:#                    ",
+        "     |________________________________|                 ::::::`:::::;'/  /    `#                   ",
+        "      /        \\   _|_|_   /         \\                                                             ",
+        "     /          \\ /     \\ /           \\                                                            ",
+        "    /            |       |             \\                                                           ",
+        "   /             |       |              \\                                                          ",
+        "  /______________|_______|_______________\\                                                         ",
+        "          ~~~~~~           ~~~~~~                                                                  ",
+        "          ~~~~               ~~~~                                                                  ",
+        "          ~                     ~                                                                  "
+    };
     short x, y;
     getmaxyx(stdscr, y, x);
+    for (short i = 0; i < y; i++) {
+        for (short j = 0; j < x; j++) {
+            mvprintw(i,j, " ");
+        }
+    }
+    for (short i = 0; i < 30; i++) {
+        mvprintw(y/2 - 20 + i, x/2 - 50, "%s", ascii[i]);
+    }
+    mvprintw(y/2 - 11, x/2 - 29 - strlen(player.username)/2, "%s", player.username);
+    switch (death) {
+        case (-1):
+            sprintf(line, "Commited Suicide...");
+            break;
+        case ( 0):
+            sprintf(line, "Starved to Death...");
+            break;
+        default: {
+            char mons[5][10] = {"Deamon", "Dragon", "Giant", "Snake", "Undeed"};
+            sprintf(line, "Murdered by %s!", mons[death-1]);
+        }
+    }
+    mvprintw(y/2 - 6, x/2 - 29 - strlen(line)/2, "%s", line);
     sprintf(line, "Thanks for playing! Game Is Over, Not Your Life, Though! Press Enter To Go Back To The Start Menu");
-    mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+    mvprintw(y/2 + 15, (x-strlen(line))/2, "%s", line);
     while (1) {
         c = getch();
         if (c == ' ') {
@@ -2317,14 +2446,48 @@ void loseGame() {
 
 void winGame() {
     deleteSave();
+    char chest[20][81] = {
+        "*******************************************************************************",
+        "          |                   |                  |                     |        ",
+        " _________|________________.=\"\"_;=.______________|_____________________|_______ ",
+        "|                   |  ,-\"_,=\"\"     `\"=.|                  |                   ",
+        "|___________________|__\"=._o`\"-._        `\"=.______________|___________________",
+        "          |                `\"=._o`\"=._      _`\"=._                     |        ",
+        " _________|_____________________:=._o \"=._.\"_.-=\"'\"=.__________________|_______ ", 
+        "|                   |    __.--\" , ; `\"=._o.\" ,-\"\"\"-._ \".   |                   ",
+        "|___________________|_._\"  ,. .` ` `` ,  `\"-._\"-._   \". '__|___________________",
+        "          |           |o`\"=._` , \"` `; .\". ,  \"-._\"-._; ;              |        ",
+        " _________|___________| ;`-.o`\"=._; .\" ` '`.\"\\` . \"-._ /_______________|_______ ",
+        "|                   | |o;    `\"-.o`\"=._``  '` \" ,__.--o;   |                   ",
+        "|___________________|_| ;     (#) `-.o `\"=.`_.--\"_o.-; ;___|___________________",
+        "____/______/______/___|o;._    \"      `\".o|o_.--\"    ;o;____/______/______/____",
+        "/______/______/______/_\"=._o--._        ; | ;        ; ;/______/______/______/_",
+        "____/______/______/______/__\"=._o--._   ;o|o;     _._;o;____/______/______/____",
+        "/______/______/______/______/____\"=._o._; | ;_.--\"o.--\"_/______/______/______/_",
+        "____/______/______/______/______/_____\"=.o|o_.--\"\"___/______/______/______/____",
+        "/______/______/______/______/______/______/______/______/______/______/______/_",
+        "*******************************************************************************"
+    };
+    short x, y;
+    getmaxyx(stdscr, y, x);
+    for (short i = 0; i < x; i++) {
+        for (short j = 0; j < y; j++) {
+            mvprintw(j,i," ");
+        }
+    }
+    for (short i = 0; i < 20; i++) {
+        mvprintw(y/2-20+i, x/2-40, "%s", chest[i]);
+    }
     if (player.anonymous) {
         endwin();
         initSCR();
         char c, line[118];
-        short x, y;
-        getmaxyx(stdscr, y, x);
-        sprintf(line, "Thanks for playing! The game is ended, press Space to see the ranking! (You're not ranked since you're not logged in)");
-        mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+        sprintf(line, "Thanks for playing! The game is ended, press Space to see the ranking!");
+        mvprintw(y/2+5, (x-strlen(line))/2, "%s", line);
+        sprintf(line, "You're not ranked since you're not logged in!");
+        mvprintw(y/2+7, (x-strlen(line))/2, "%s", line);
+        
+        
         while (1) {
             c = getch();
             if (c == ' ') {
@@ -2367,7 +2530,7 @@ void winGame() {
         short x, y;
         getmaxyx(stdscr, y, x);
         sprintf(line, "Thanks for playing! The game is ended, press Space to see the ranking!");
-        mvprintw(y/2, (x-strlen(line))/2, "%s", line);
+        mvprintw(y/2 + 5, (x-strlen(line))/2, "%s", line);
         
         
         fptr = fopen("data/users.txt", "w");
@@ -2386,8 +2549,6 @@ void winGame() {
                 return;
             }
         }
-        /*Doesn't save properly*/
-        
     }
 }
 

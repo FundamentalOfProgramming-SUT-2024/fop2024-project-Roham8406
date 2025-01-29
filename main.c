@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.5.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.0*/
 #include "map.c"
 
 void mainMenu();
@@ -605,6 +605,13 @@ void Ranking() {
             if (!strcmp(player.username, li[j].username)) {
                 break;
             }
+        }
+    }
+    for (short i = 0; i < 3; i++) {
+        for (short j = 0; li[i].username[j] != '\0'; j++) {
+            // if (li[i].username[j] >= 'A' && li[i].username[j] <= 'Z') li[i].username[j] += '\u24B6' - 'A';
+
+            // li[i].username[j] += 65296 - '0';
         }
     }
     strcat(li[0].username, " the Greatest");

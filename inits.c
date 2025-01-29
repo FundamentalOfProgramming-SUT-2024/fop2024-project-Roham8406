@@ -1,4 +1,4 @@
-/*version 1.6.0*/
+/*version 1.6.2*/
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
@@ -155,8 +155,10 @@ short choose() {
 int printMenu(struct button butts[], char title[], short len, short ii) {
     // clear();
     // refresh();
+    
     int row, col;
     getmaxyx(stdscr, row, col);
+    endTime();
     
     // while (1) {
         attron(COLOR_PAIR(1));
@@ -254,6 +256,7 @@ short input(char inp[], struct button butts[], char title[], short len) {
 
 
 short menu (struct button butts[], short len, short end, short active, char title[], short last) {
+
     butts[active].state = 1;
     printMenu(butts, title, len, -1);
     

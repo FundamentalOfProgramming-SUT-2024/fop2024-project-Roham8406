@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.1*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.2*/
 #include "map.c"
 
 void mainMenu();
@@ -244,6 +244,12 @@ void signupForm() {
                     ((*(butts[2].check))(butts[2].value))) {
                         if (addUser(butts)) {
                             Prompt("User Created.");
+                            printMenu(butts, "Sign Up Form", 5, -1);
+                            time_t now = time(NULL);
+                            while (1) {
+                                if (time(NULL) > now + 1) break;
+                                usleep(1000);
+                            }
                             state = 0;
                         } else {
                             Prompt("Unknwon error, please try again");
@@ -429,6 +435,12 @@ void loginForm() {
                 if (isValidLogIn(butts)) {
                     login(butts);
                     Prompt("Logged in successfully");
+                    printMenu(butts, "Login Form", 4, -1);
+                    time_t now = time(NULL);
+                    while (1) {
+                        if (time(NULL) > now + 1) break;
+                        usleep(1000);
+                    }
                     clear();
                     endwin();
                     mainMenu();

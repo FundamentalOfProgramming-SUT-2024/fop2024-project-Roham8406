@@ -1,4 +1,4 @@
-/* ver: 1.6.0 */
+/* ver: 1.6.2 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -200,8 +200,9 @@ typedef struct {
 
 char gamePrompt[100];
 time_t now;
-int gtimer = 1;
+int gtimer = 3;
 int gDELAY = 100000;
+short wrong = 0;
 
 void delgPrompt() {
     gamePrompt[0] = '\0';
@@ -210,6 +211,7 @@ void delgPrompt() {
     for (int i = 0; i < col; i++){
         mvprintw(0, i, " ");
     }
+    gtimer = 3;
 }
 void gPrompt(char txt[]) {
     delgPrompt();
@@ -1678,9 +1680,12 @@ void moveTo(short y, short x, short skip) {
                 }
             }
         }
-    } else {
-        match.health -= 2;
+        if (match.rooms[match.level][room].type == 2) {
+            match.health -= 2;
+            death = -2;
+        }
     }
+
     short temp = 0;
     switch (match.maps[match.level][y][x]) {
         case 9: {
@@ -1837,15 +1842,19 @@ void attack(short prev) {
             for (short i = counter; i < moCount; i++) {
                 if (match.mons[i].level == match.level + 1 &&
                     abs(match.mons[i].pos.x-match.pos.x) <= 1 &&
-                    abs(match.mons[i].pos.y-match.pos.y) <= 1) {
+                    abs(match.mons[i].pos.y-match.pos.y) <= 1 &&
+                    match.mons[i].type) {
                     match.mons[i].health -= strength[match.equArm-1];
                     if (match.mons[i].health < 0) match.mons[i].health = 0;
                     char message[100];
                     sprintf(message, "You hit the %s, it's health is %d as of now!", li[match.mons[i].type-1], match.mons[i].health);
                     gPrompt(message);        
                     if (match.mons[i].health == 0) {
+                        sprintf(message, "You killed the %s!", li[match.mons[i].type-1]);
+                        
                         match.mons[i].type = 0;
-
+                        gPrompt(message);        
+                    
                     }
                     state = 0;
                 }
@@ -2325,7 +2334,7 @@ void pauseMenu() {
     }
 }
 int calcPoint() {
-    return match.gold;
+    return match.gold * (1 + match.difficulty) * (1 + match.difficulty) * (1 + match.difficulty);
 }
 
 void treasureRoom() {
@@ -2419,6 +2428,9 @@ void loseGame() {
     }
     mvprintw(y/2 - 11, x/2 - 29 - strlen(player.username)/2, "%s", player.username);
     switch (death) {
+        case (-2):
+            sprintf(line, "Avada Kedavra...");
+            break;
         case (-1):
             sprintf(line, "Commited Suicide...");
             break;
@@ -2559,7 +2571,7 @@ short bplay() {
     while (1) {
         short i = 0, j = 0;
         // usleep(gDELAY);
-        // gendTime();
+        gendTime();
         char c = getch();
         if (c) {
             switch(c) {
@@ -2595,9 +2607,13 @@ short bplay() {
                     i++;
                     if (j != 0) i++;
                     if (prev == 'f' || prev == 'F') fastmove(i,j);
-                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x)) {
+                        wrong = 0;
                         moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
-                    else gPrompt("Impossible move!");
+                    } else {
+                        if (wrong == 1) gPrompt("Impossible move!");
+                        else wrong = 1;
+                    }
                 } break;
 
                 case '7':
@@ -2626,9 +2642,13 @@ short bplay() {
                     i++;
                     j++;
                     if (prev == 'f' || prev == 'F') fastmove(i,j);
-                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x)) {
                         moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
-                    else gPrompt("Impossible move!");
+                        wrong = 0;
+                    } else {
+                        if (wrong == 1) gPrompt("Impossible move!");
+                        else wrong = 1;
+                    }
                 } break;
                 case 'a': {
                     if (match.equArm) attack(1);
@@ -2679,7 +2699,7 @@ short gplay() {
     while (1) {
         short i = 0, j = 0;
         // usleep(gDELAY);
-        // gendTime();
+        gendTime();
         char c = getch();
         if (c) {
             switch(c) {
@@ -2739,9 +2759,13 @@ short gplay() {
                     i++;
                     if (j != 0) i++;
                     if (prev == 'f' || prev == 'F') fastmove(i,j);
-                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x)){
+                        wrong = 0;
                         moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
-                    else gPrompt("Impossible move!");
+                    } else {
+                        if (wrong == 1) gPrompt("Impossible move!");
+                        else wrong = 1;
+                    }
                 } break;
 
                 case '7':
@@ -2770,9 +2794,13 @@ short gplay() {
                     i++;
                     j++;
                     if (prev == 'f' || prev == 'F') fastmove(i,j);
-                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x))
+                    else if (moveCheck(match.maps[match.level], match.pos.y + j, match.pos.x + i, match.pos.y, match.pos.x)) {
+                        wrong = 0;
                         moveTo(match.pos.y + j, match.pos.x + i, prev == 'g' || prev == 'G');
-                    else gPrompt("Impossible move!");
+                    } else {
+                        if (wrong == 1) gPrompt("Impossible move!");
+                        else wrong = 1;
+                    }
                 } break;
                 case 'a': {
                     if (match.equArm) attack(1);

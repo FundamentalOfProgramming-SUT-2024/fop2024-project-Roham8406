@@ -1,9 +1,7 @@
-/* ver: 1.6.4 */
+/* ver: 1.6.5 */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <locale.h>
 #include "inits.c"
 #include "track.c"
@@ -337,11 +335,11 @@ void markWay(char main[MAXy][MAXx], int map[MAXy][MAXx], pair end) {
     }
 }
 
-void connect(room rooms[12], short ind) {
+void CONNECT(room rooms[12], short ind) {
     if (rooms[ind].state == 2) return;
     rooms[ind].state = 2;
     for (short i = 0; i < rooms[ind].neiC; i++) {
-        connect(rooms, rooms[ind].nei[i]);
+        CONNECT(rooms, rooms[ind].nei[i]);
     }
 }
 
@@ -845,7 +843,7 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
                 if (!doorFinder(doors, i, rooms, map)) return floorRandomizer(rooms, map, level, first, stair, map2);
             }
         }
-        connect(rooms, 0);
+        CONNECT(rooms, 0);
         if (!isConnected(rooms)) return floorRandomizer(rooms, map, level, first, stair, map2);
 
 

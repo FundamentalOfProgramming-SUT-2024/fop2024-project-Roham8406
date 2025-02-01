@@ -1,7 +1,8 @@
-/*version 1.6.2*/
+/*version 1.6.5*/
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
+#include <unistd.h>
 
 #define UA 3
 #define DA 2

@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.2*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.5*/
 #include "map.c"
 
 void mainMenu();
@@ -6,6 +6,8 @@ void loginForm();
 
 
 void inits() {
+    setlocale(LC_ALL, "en_US.UTF-8");
+    initAudio("tracks/Hitman.mp3");
     srand(time(NULL));
     initscr();
     curs_set(FALSE);
@@ -19,7 +21,7 @@ void inits() {
     strcpy(tracks[i].dir, "tracks/Warfare.mp3");
     i++;
     strcpy(tracks[i].name, "Hitman");
-    strcpy(tracks[i].dir, "tracks/Harfare.mp3");
+    strcpy(tracks[i].dir, "tracks/Hitman.mp3");
     i++;
     strcpy(tracks[i].name, "In Dreams");
     strcpy(tracks[i].dir, "tracks/indreams.mp3");
@@ -27,7 +29,7 @@ void inits() {
     strcpy(tracks[i].name, "Motivatio");
     strcpy(tracks[i].dir, "tracks/Motivation.mp3");
     i++;
-    // play(tracks[0].dir);
+    // playMusic(tracks[0].dir);
 }
 
 
@@ -159,7 +161,7 @@ short chooseTrack(char r[]) {
     sscanf(r, "%hd", &d);
     char dir[30];
     strcpy(dir, tracks[d].dir);
-    play(dir);
+    playMusic(dir);
     return 1;
 }
 
@@ -863,17 +865,12 @@ void mainMenu() {
 
 
 int main () {
-    setlocale(LC_ALL, "en_US.UTF-8");
+    
 
-    // initscr();
-    // while (1) {
-    //     char c;
-    //     c = getch();
-    //     if (c) {
-    //         mvprintw(1,1,"☻");
-    //     }
-    // }
+
     inits();    
     mainMenu();   
+
+    freeAudio();
     return 0;
 }

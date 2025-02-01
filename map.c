@@ -1,4 +1,4 @@
-/* ver: 1.6.2 */
+/* ver: 1.6.4 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -632,15 +632,13 @@ int battleRandomizer(room rooms[12], char map[MAXy][MAXx], char map2[MAXy][MAXx]
     if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
-    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+    if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 28;
     if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
-    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
     if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
     if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
-    if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
     
     if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
     if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
@@ -891,9 +889,10 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
         }
         if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
+        if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 25;
         if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 26;
         if (rand() % (2*food) == 0) map[x + rand() % length][y + rand() % width] = 27;
-        if (rand() % (food <= 1 ? 1 : food/2) == 0) map[x + rand() % length][y + rand() % width] = 28;
+        if (rand() % food == 0) map[x + rand() % length][y + rand() % width] = 28;
         if (rand() % gold == 0) map[x + rand() % length][y + rand() % width] = 29;
         if (rand() % (gold*7) == 0) map[x + rand() % length][y + rand() % width] = 30;
         if (rooms[i].type == 4) {
@@ -1096,12 +1095,12 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     char health[80] = "", hunger[50] = "";
     for (short i = 0; i < 20; i++) {
         strcat(health, (match.health >= (i+1) * 5) ? "\u2588": "\u2591"); 
-        strcat(hunger, (match.hunger >= (i+1) * 5) ? "\u2588": "\u2591"); 
+        strcat(hunger, (match.hunger >= (i+1) * 9) ? "\u2588": "\u2591"); 
     }
     if (match.equArm) {
         sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], health, hunger, match.level);
     } else {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed\tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, health, hunger, match.level);
+        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed     \tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, health, hunger, match.level);
     }
     attron(COLOR_PAIR(4));
     mvprintw(1, 4, "%s", invents);
@@ -1125,6 +1124,16 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     short room = roomFinder(match.rooms[level], match.pos);
                     if (abs(i - match.pos.y) < 3 && abs(j - match.pos.x) < 3 &&
                         match.rooms[match.level][room].type == 3) reveal = 1; 
+                    if (match.rooms[match.level][room].type == 3) {
+                        for (short i = 0; i < match.monss; i++) {
+                            if (match.level + 1 == match.mons[i].level &&
+                                room == match.mons[i].room) {
+                                if (abs(match.mons[i].pos.y - match.pos.y) < 3 &&
+                                    abs(match.mons[i].pos.x - match.pos.x) < 3) match.mons[i].seen = 1;
+                                else match.mons[i].seen = 0;
+                            }
+                        }
+                    }
                 } break;
                 default: {
                     if (abs(i - match.pos.y) + abs(j - match.pos.x) < 5  && 
@@ -1152,7 +1161,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 10: strcpy(ch, "?"); cr = 0; break;
                     case 11: strcpy(ch, "@"); cr2 = 27; break;
                     case 12: strcpy(ch, "@"); cr2 = 28; break;
-                    case 13: strcpy(ch, "#"); cr2 = 29; break;
+                    case 13: strcpy(ch, "\u2588"); cr2 = 29; break;
                     case 14: strcpy(ch, "&"); cr = 5; break;
                     case 20: strcpy(ch, "O"); cr = 0; break;
                     case 21: strcpy(ch, cheat == 2 ? "^" : "."); cr = 1; break;
@@ -1198,6 +1207,26 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
             mvprintw(i+2,j,"%s", ch);
         }
     }
+    for (short i = 0; i < match.monss; i++) {
+        for (short room = 0; room < 12; room++) {
+            if (match.rooms[match.level][room].type == 3) {
+                for (short i = 0; i < match.monss; i++) {
+                    if (match.level + 1 == match.mons[i].level &&
+                        room == match.mons[i].room) {
+                        if ((abs(match.mons[i].pos.y - match.pos.y) < 3 &&
+                             abs(match.mons[i].pos.x - match.pos.x) < 3) ||
+                             (match.mons[i].type == 4)) {
+                                if (match.mons[i].seen) match.mons[i].seen = 1;
+                             }
+                        else match.mons[i].seen = 0;
+                    }
+                }
+            }
+        }
+    }
+    
+                        
+                    
     attron(COLOR_PAIR(80 + match.colour));
     mvprintw(2+match.pos.y, match.pos.x, "%s", "\u265A");
     attroff(A_BOLD);
@@ -1230,12 +1259,12 @@ void help () {
         "7\t\t\tTop Left\t\t\t9\t\t\tTop Right ",
         "B\t\t\tBottom Left\t\t\tN\t\t\tBottom Right ",
         "1\t\t\tBottom Left\t\t\t3\t\t\tBottom Right ",
-        "F\t\t\tFast Move\t\t\tSpace\t\t\tAttack / Pick ",
-        "G\t\t\tMove Without Picking\t\t<Direction>\t\tDirect the Attack ",
-        "5\t\t\tPick\t\t\t\tI\t\t\tWeapon Menu ",
-        "E\t\t\tFood Menu\t\t\tO\t\t\tElixir Menu ",
-        "M\t\t\tShow Map\t\t\tS\t\t\tScan ",
-        "K\t\t\tUse Ancient Key",
+        "F -> <Direction>\tFast Move\t\t\tSpace -> <Direction>\tAttack",
+        "G -> <Direction>\tMove Without Picking\t\t>\t\t\tMove Upsatirs ",
+        "5\t\t\tPick\t\t\t\t<\t\t\tMove Downstairs ",
+        "S\t\t\tScan\t\t\t\tO\t\t\tElixir Menu ",
+        "M\t\t\tShow Map\t\t\tE\t\t\tFood Menu ",
+        "K\t\t\tUse Ancient Key\t\t\tI\t\t\tWeapon Menu ",
         "",
         "Symbols: ",
         "\u265A\t\tHero ",
@@ -1289,7 +1318,7 @@ void mapCreator() {
     for (short i = 0; i < 3; i++) match.elixir[i] = 0;
     for (short i = 0; i < 5; i++) match.foods[i].type = 0;
     match.arm[0] = 1;
-    // match.arm[3] = 10;
+    // match.arm[2] = 10;
     match.elixir[0] = 2;
     match.brKey = 0;
     match.equArm = 0;
@@ -1646,13 +1675,32 @@ void moveMonsters() {
 
 void loseGame();
 
+void foodRot() {
+    for (short i = 0; i < 5; i++) {
+        if (match.foods[i].type == 0) continue;
+        match.foods[i].state--;
+        if (match.foods[i].state < 0) {
+            switch (match.foods[i].type) {
+                case 1: {
+                    match.foods[i].type = 0;
+                } break;
+                case 2:
+                case 3: {
+                    match.foods[i].type = 1;
+                    match.foods[i].state = 60;
+                }
+            }
+        } 
+    }
+}
+
 void moveTo(short y, short x, short skip) {
     death = 0;
     if (match.hunger < 30 && match.intermission <= 0) {
         if (match.heal > 0) match.health += 2;
         else match.health ++;
     }
-    if (match.hunger > 120 - 10*match.difficulty) match.health--;
+    if (match.hunger > 140 - 10*match.difficulty) match.health--;
     match.hunger ++;
     match.intermission --;
     match.fast --;
@@ -1771,7 +1819,7 @@ void moveTo(short y, short x, short skip) {
                     match.arm[(match.maps[match.level][y][x] < 36) ? (match.maps[match.level][y][x] - 31) :
                               (match.maps[match.level][y][x] - 34)] += gunCount[match.maps[match.level][y][x] - 31];
                     char message[100];
-                    sprintf(message, "You warrior! You %s %s %d %d %d %d %d!", guns[match.maps[match.level][y][x] - 31], mess[(match.maps[match.level][y][x] > 35)?1:0], match.arm[1], match.arm[2], match.arm[3], match.arm[4], match.maps[match.level][y][x]);
+                    sprintf(message, "You warrior! You %s %s!", guns[match.maps[match.level][y][x] - 31], mess[(match.maps[match.level][y][x] > 35)?1:0]);
                     gPrompt(message);
                 }
                 match.maps[match.level][y][x] = 7;
@@ -1804,6 +1852,7 @@ void moveTo(short y, short x, short skip) {
         } break;
     }
 
+    foodRot();
     printMap(match.maps[match.level], match.level, 0);
     if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
 }
@@ -1948,7 +1997,9 @@ void attack(short prev) {
                         x -= xs[match.lastShot];
                     } break;
                     default: {
-                        for (short i = 0; i < match.monss; i++) {
+                        int counter = match.level == 5 ? 190:0;
+                        int moCount = match.level == 5 ? 210:match.monss;
+                        for (short i = counter; i < moCount; i++) {
                             if (match.level + 1 == match.mons[i].level &&
                                 y == match.mons[i].pos.y &&
                                 x == match.mons[i].pos.x &&
@@ -2046,20 +2097,20 @@ void foodMenu(short i) {
                         break;
                     case 1: {
                         match.foods[ind-1].type = 0;
-                        match.health += 50;
+                        match.health += 40;
                         match.hunger -= 30;
                         Prompt("You ate a Regular Food!");
                     } break;
                     case 2: {
                         match.foods[ind-1].type = 0;
-                        match.health += 50;
+                        match.health += 40;
                         match.hunger -= 30;
                         match.strength += 15;
                         Prompt("You ate an Excellent Food!");
                     } break;
                     case 3: {
                         match.foods[ind-1].type = 0;
-                        match.health += 50;
+                        match.health += 40;
                         match.hunger -= 30;
                         match.fast += 20;
                         Prompt("You ate a Magical Food!");
@@ -2380,7 +2431,7 @@ void deleteSave() {
 }
 
 void loseGame() {
-    deleteSave();
+    if (death != -1) deleteSave();
     endwin();
     initSCR();
     char c, line[118];
@@ -2424,9 +2475,9 @@ void loseGame() {
         }
     }
     for (short i = 0; i < 30; i++) {
-        mvprintw(y/2 - 20 + i, x/2 - 50, "%s", ascii[i]);
+        mvprintw(y/2 - 15 + i, x/2 - 50, "%s", ascii[i]);
     }
-    mvprintw(y/2 - 11, x/2 - 29 - strlen(player.username)/2, "%s", player.username);
+    mvprintw(y/2 - 6, x/2 - 29 - strlen(player.username)/2, "%s", player.username);
     switch (death) {
         case (-2):
             sprintf(line, "Avada Kedavra...");
@@ -2442,9 +2493,9 @@ void loseGame() {
             sprintf(line, "Murdered by %s!", mons[death-1]);
         }
     }
-    mvprintw(y/2 - 6, x/2 - 29 - strlen(line)/2, "%s", line);
+    mvprintw(y/2 - 1, x/2 - 29 - strlen(line)/2, "%s", line);
     sprintf(line, "Thanks for playing! Game Is Over, Not Your Life, Though! Press Enter To Go Back To The Start Menu");
-    mvprintw(y/2 + 15, (x-strlen(line))/2, "%s", line);
+    mvprintw(y/2 + 18, (x-strlen(line))/2, "%s", line);
     while (1) {
         c = getch();
         if (c == ' ') {

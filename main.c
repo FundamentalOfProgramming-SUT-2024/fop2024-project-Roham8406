@@ -542,17 +542,13 @@ void printRanking(struct gamers li[], short offset, short self) {
         switch (i) {
             case 0: {                
                 attron(COLOR_PAIR(101));
-                mvprintw(3+i-offset,1,"%s", "\U0001F3C6");
             } break;
             case 1: {
                 attron(COLOR_PAIR(102));
-                mvprintw(3+i-offset,1,"\U0001F948");
 
             } break;
             case 2: {
                 attron(COLOR_PAIR(103));
-                mvprintw(3+i-offset,1,"\U0001F949");
-
             } break;
             default: {
                 attroff(A_UNDERLINE);
@@ -569,6 +565,19 @@ void printRanking(struct gamers li[], short offset, short self) {
             for (short j = 0; j<col; j++) {
                 mvprintw(3+i-offset, j, " ");
             }
+        }
+        switch (i) {
+            case 0: {                
+                mvprintw(3+i-offset,1,"%s", "\U0001F3C6");
+            } break;
+            case 1: {
+                mvprintw(3+i-offset,1,"\U0001F948");
+
+            } break;
+            case 2: {
+                mvprintw(3+i-offset,1,"\U0001F949");
+
+            } break;
         }
         mvprintw(3+i-offset,0,"%d",i+1);
         if (type) {

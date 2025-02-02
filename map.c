@@ -1,4 +1,4 @@
-/* ver: 1.6.7 */
+/* ver: 1.6.8 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -991,17 +991,13 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
         } if (rooms[i].type == 4) {
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
-            if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
+            addMonster(level, rooms, i, map);
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
@@ -1016,7 +1012,13 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
             if (rand() % mons == 0) {addMonster(level, rooms, i, map);}
         }
-        
+    }
+    for (short i = 0; i < match.monss; i++) {
+        if (match.mons[i].level == level) {
+            if (roomFinder(rooms, match.mons[i].pos) != match.mons[i].room) {
+                return floorRandomizer(rooms, map, level, first, stair, map2);
+            }
+        } 
     }
     if (level != 5) {
 

@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.6*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.7*/
 #include "map.c"
 
 void mainMenu();
@@ -16,6 +16,7 @@ void inits() {
 
     player.anonymous = 1;
     strcpy(player.username, "Guest");
+    match.music = 2;
     short i = 0;
     strcpy(tracks[i].name, "N/A");
     strcpy(tracks[i].dir, "");
@@ -158,7 +159,6 @@ short chooseDifficulty(char r[]) {
 short chooseTrack(char r[]) {
     short d;
     sscanf(r, "%hd", &d);
-    // strcpy(mainMusic, tracks[d].dir);
     if (*tracks[d].dir) playMusic(tracks[d].dir);
     else freeAudio();
     isMusic = tracks[d].dir != 0; 
@@ -816,6 +816,7 @@ void mainMenu() {
                     clear();
                     endwin();
                     printf("Thanks for playing our game! Hope to see you again, soon!");
+                    exit(0);
                     return;
                 }
             } break;

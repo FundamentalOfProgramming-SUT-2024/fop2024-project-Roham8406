@@ -1,4 +1,4 @@
-/* ver: 1.6.6 */
+/* ver: 1.6.7 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -1046,10 +1046,10 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
                     case 2: map[rooms[i].br.y-1][rooms[i].tl.x+1] = 14; break;
                     case 3: map[rooms[i].br.y-1][rooms[i].br.x-1] = 14; break;
                 }
-                rooms[i].pwd = rand() % 1000;
+                rooms[i].pwd = rand() % 10000;
                 rooms[i].mirror = rand()%3 ? 1 : 0;
                 rooms[i].lockState = 0;
-                if (level < 3 || rand()%(5-match.difficulty)) {
+                if (level < 3 || rand()%(4-match.difficulty)) {
                     if (rand() % (4-match.difficulty)) rooms[i].lockDT = 1;
                     else {
                         rooms[i].lockDT = 10 + rand() % 30;
@@ -1427,6 +1427,7 @@ void initThemes() {
 }
 
 void revealCode(short pass, short mir) {
+    seen = time(NULL);
     char pwd[5];
     short counter = (1-mir)*3;
     mir = mir*2 - 1;
@@ -1554,8 +1555,13 @@ short pwd(short state, short counter) {
                             return -2;
                         } else {
                             gPrompt("You broke the key, loser...");
-                            match.key --;
-                            match.brKey ++;
+                            if (match.brKey) {
+                                match.brKey --;
+                            }
+                            else {
+                                match.key --;
+                                match.brKey ++;
+                            }
                         }
                     } else {
                         gPrompt("No ancient keys avaible!");
@@ -1574,6 +1580,10 @@ short openPwd(room *r) {
     if (r->lockState == 3) {
         securityEnabled(r);
         return 0;
+    }
+    if (r->lockDT > 10) {
+        time_t n = time(NULL);
+        if (n - seen > r->lockDT) r->pwd % 10000;
     }
     short res = pwd(r->lockState, 0);
     
@@ -1790,7 +1800,7 @@ void moveTo(short y, short x, short skip) {
                 case 2: revealCode(match.rooms[match.level][r].pwd, mir); break;
                 default: {
                     time_t n = time(NULL);
-                    if (seen - n > type) match.rooms[match.level][r].pwd = rand() % 1000;
+                    if (n - seen > type) match.rooms[match.level][r].pwd = rand() % 10000;
                     seen = n;
                     revealCode(match.rooms[match.level][r].pwd, mir);
                 }
@@ -2776,7 +2786,7 @@ short bplay() {
                 
             }
         }
-        if (c==27) {endwin(); break;}
+        // if (c==27) {endwin(); break;}
         if (c) prev = c;
         printMap(match.maps[match.level], match.level, 1);
         short state = 1;

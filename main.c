@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.7*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.7.1*/
 #include "map.c"
 
 void mainMenu();
@@ -7,7 +7,7 @@ void loginForm();
 
 void inits() {
     setlocale(LC_ALL, "en_US.UTF-8");
-    initAudio("tracks/Hitman.mp3");
+    sleep(1);
     srand(time(NULL));
     initscr();
     curs_set(FALSE);
@@ -20,18 +20,23 @@ void inits() {
     short i = 0;
     strcpy(tracks[i].name, "N/A");
     strcpy(tracks[i].dir, "");
+    strcpy(tracks[i].author, "");
     i++;
     strcpy(tracks[i].name, "Warfare");
     strcpy(tracks[i].dir, "tracks/Warfare.mp3");
+    strcpy(tracks[i].author, "Uknown I");
     i++;
     strcpy(tracks[i].name, "Hitman");
     strcpy(tracks[i].dir, "tracks/Hitman.mp3");
+    strcpy(tracks[i].author, "Unknown II");
     i++;
     strcpy(tracks[i].name, "In Dreams");
     strcpy(tracks[i].dir, "tracks/indreams.mp3");
+    strcpy(tracks[i].author, "Unknown III");
     i++;
     strcpy(tracks[i].name, "Motivatio");
     strcpy(tracks[i].dir, "tracks/Motivation.mp3");
+    strcpy(tracks[i].author, "Unknown IV");
     i++;
     // playMusic(tracks[0].dir);
 }
@@ -161,7 +166,7 @@ short chooseTrack(char r[]) {
     sscanf(r, "%hd", &d);
     if (*tracks[d].dir) playMusic(tracks[d].dir);
     else freeAudio();
-    isMusic = tracks[d].dir != 0; 
+    isMusic = *tracks[d].dir != 0; 
     match.music = d;
     return 1;
 }
@@ -757,7 +762,17 @@ void Setting() {
 
 void mainMenu() {
     initSCR();
-    
+    int x, y;
+    getmaxyx(stdscr, y, x);
+    while (x < MAXx+Left-3 || y <Top + Bottom + MAXy-3) {
+        mvprintw(y/2, x/2 - 25, "Your window is too small, stretch it & press Enter");
+        while (1) {
+            char c = getch();
+            if (c == ' ') break;
+        }
+        getmaxyx(stdscr, y, x);
+        clear();
+    }
     timer = 5;
     short i = 0;
 
@@ -871,6 +886,7 @@ int main () {
 
 
     inits();    
+    initAudio("tracks/Hitman.mp3"); 
     mainMenu();   
 
     freeAudio();

@@ -1,4 +1,4 @@
-/* ver: 1.7.0 */
+/* ver: 1.7.1 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +11,8 @@
 
 #define MUSICS 5
 
-#define MAXx 150
-#define MAXy 40
+#define MAXx 129
+#define MAXy 35
 #define Top 7
 #define Bottom 6
 #define Left 50
@@ -2861,7 +2861,7 @@ short bplay() {
                     pauseMenu();
                     return bplay();
                 } break;
-                case '~': exit(0); /*DELETED*/
+                // case '~': exit(0); /*DELETED*/
                 case UA:
                 case 'j':
                 case 'J':

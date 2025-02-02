@@ -1,4 +1,4 @@
-/* ver: 1.7.2 */
+/* ver: 2.0.0 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,12 +9,10 @@
 #include <math.h>
 
 
-#define MUSICS 5
+#define MUSICS 14
 
-// #define MAXx 129
-// #define MAXy 35
-#define MAXx 124 //DELETED
-#define MAXy 30 //DELETED
+#define MAXx 129
+#define MAXy 35
 #define Top 7
 #define Bottom 6
 #define Left 50

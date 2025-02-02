@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.7.1*/
+/* By Roham Ghasemi Qomi; The Rogue; v:2.0.0*/
 #include "map.c"
 
 void mainMenu();
@@ -22,21 +22,57 @@ void inits() {
     strcpy(tracks[i].dir, "");
     strcpy(tracks[i].author, "");
     i++;
-    strcpy(tracks[i].name, "Warfare");
-    strcpy(tracks[i].dir, "tracks/Warfare.mp3");
-    strcpy(tracks[i].author, "Uknown I");
+    strcpy(tracks[i].name, "The Grand Score");
+    strcpy(tracks[i].dir, "tracks/Overture.mp3");
+    strcpy(tracks[i].author, "Alexander Nakarada");
+    i++;
+    strcpy(tracks[i].name, "Hitman");
+    strcpy(tracks[i].dir, "tracks/Forest_Walk.mp3");
+    strcpy(tracks[i].author, "Alexander Nakarada");
+    i++;
+    strcpy(tracks[i].name, "In Dreams");
+    strcpy(tracks[i].dir, "tracks/In_Dreams.mp3");
+    strcpy(tracks[i].author, "Scott Buckly");
+    i++;
+    strcpy(tracks[i].name, "Chase");
+    strcpy(tracks[i].dir, "tracks/Chase.mp3");
+    strcpy(tracks[i].author, "Alexander Nakarada");
+    i++;
+    strcpy(tracks[i].name, "Powerful Trap Beat");
+    strcpy(tracks[i].dir, "tracks/Powerful_Trap.mp3");
+    strcpy(tracks[i].author, "Alex Productions");
+    i++;
+    strcpy(tracks[i].name, "Sneaky Snitch");
+    strcpy(tracks[i].dir, "tracks/Sneaky_Snitch.mp3");
+    strcpy(tracks[i].author, "Kevin MacLeod");
     i++;
     strcpy(tracks[i].name, "Hitman");
     strcpy(tracks[i].dir, "tracks/Hitman.mp3");
-    strcpy(tracks[i].author, "Unknown II");
+    strcpy(tracks[i].author, "Kevin MacLeod");
     i++;
-    strcpy(tracks[i].name, "In Dreams");
-    strcpy(tracks[i].dir, "tracks/indreams.mp3");
-    strcpy(tracks[i].author, "Unknown III");
-    i++;
-    strcpy(tracks[i].name, "Motivatio");
+    strcpy(tracks[i].name, "Motivation");
     strcpy(tracks[i].dir, "tracks/Motivation.mp3");
-    strcpy(tracks[i].author, "Unknown IV");
+    strcpy(tracks[i].author, "Sakura Girl");
+    i++;
+    strcpy(tracks[i].name, "La Camracito");
+    strcpy(tracks[i].dir, "tracks/La_Campracito.mp3");
+    strcpy(tracks[i].author, "Roham Ghasemi");
+    i++;
+    strcpy(tracks[i].name, "Asian Graveyard");
+    strcpy(tracks[i].dir, "tracks/Asian_Graveyard.mp3");
+    strcpy(tracks[i].author, "Darren Curtis");
+    i++;
+    strcpy(tracks[i].name, "Adventure");
+    strcpy(tracks[i].dir, "tracks/Adventure.mp3");
+    strcpy(tracks[i].author, "Alexander Nakarada");
+    i++;
+    strcpy(tracks[i].name, "Shekasteh");
+    strcpy(tracks[i].dir, "tracks/Shekasteh.mp3");
+    strcpy(tracks[i].author, "Parviz Meshkatian");
+    i++;
+    strcpy(tracks[i].name, "Ke Khordam Az DahanBandi...");
+    strcpy(tracks[i].dir, "tracks/Ke_Khordam.mp3");
+    strcpy(tracks[i].author, "Homayoun Shajarian");
     i++;
     // playMusic(tracks[0].dir);
 }
@@ -756,6 +792,8 @@ void Setting() {
         }
 
     }
+
+    while (1) {}
 }
 
 

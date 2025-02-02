@@ -1,4 +1,4 @@
-/* Ver 1.7.0 */
+/* Ver 2.0.0 */
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -9,7 +9,7 @@
 #define SCREEN_HEIGHT 600
 
 struct track {
-    char name[20];
+    char name[30];
     char dir[30]; 
     char author[20];
 };

@@ -1,4 +1,4 @@
-/*version 1.7.2*/
+/*version 2.0.0*/
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
@@ -63,7 +63,7 @@ struct button {
     char value[100];
     char label[100];
     short options;
-    char list[10][30];
+    char list[16][30];
     short currentOption;
     short state;
     short len;

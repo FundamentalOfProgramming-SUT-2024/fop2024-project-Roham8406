@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:1.6.5*/
+/* By Roham Ghasemi Qomi; The Rogue; v:1.6.6*/
 #include "map.c"
 
 void mainMenu();
@@ -17,6 +17,9 @@ void inits() {
     player.anonymous = 1;
     strcpy(player.username, "Guest");
     short i = 0;
+    strcpy(tracks[i].name, "N/A");
+    strcpy(tracks[i].dir, "");
+    i++;
     strcpy(tracks[i].name, "Warfare");
     strcpy(tracks[i].dir, "tracks/Warfare.mp3");
     i++;
@@ -153,15 +156,13 @@ short chooseDifficulty(char r[]) {
 }
 
 short chooseTrack(char r[]) {
-
-    /*
-    Incable of playing(game) and playing(sound)
-    */
     short d;
     sscanf(r, "%hd", &d);
-    char dir[30];
-    strcpy(dir, tracks[d].dir);
-    playMusic(dir);
+    // strcpy(mainMusic, tracks[d].dir);
+    if (*tracks[d].dir) playMusic(tracks[d].dir);
+    else freeAudio();
+    isMusic = tracks[d].dir != 0; 
+    match.music = d;
     return 1;
 }
 

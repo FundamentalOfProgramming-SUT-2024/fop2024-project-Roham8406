@@ -1,4 +1,4 @@
-/* ver: 1.6.5 */
+/* ver: 1.6.6 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
 #include <math.h>
 
 
-#define MUSICS 4
+#define MUSICS 5
 
 #define MAXx 150
 #define MAXy 40
@@ -597,7 +597,7 @@ int battleRandomizer(room rooms[12], char map[MAXy][MAXx], char map2[MAXy][MAXx]
     short row = MAXy, col = MAXx;
     int sum = 0, k = 0, drs = 0;
     rooms[0].state = 1;
-    rooms[0].type = 1;
+    rooms[0].type = 5;
     rooms[0].tl.x = (col/3 + rand() % (col/15));
     rooms[0].tl.y = (row/4 + rand() % (5*row/28));
     rooms[0].br.x = (2*col/3 - rand() % (col/15));
@@ -1183,7 +1183,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 46: strcpy(ch, "H"); cr = 7; break;
                     case 47: strcpy(ch, "X"); cr = 7; break;
                     case 48: strcpy(ch, "E"); cr = 7; break;
-                    case 39: strcpy(ch, "\u26B7"); cr = 5; break; //1403
+                    case 39: strcpy(ch, "\u26B7"); cr = 4; break; //1403
                     // case 40: strcpy(ch, "D"); cr = 8; break;
                     // case 41: strcpy(ch, "F"); cr = 8; break;
                     // case 42: strcpy(ch, "G"); cr = 8; break;
@@ -1397,6 +1397,17 @@ void initThemes() {
     init_pair(66, 12, 10);                   //Food
     init_pair(67, COLOR_MAGENTA, 10);        //Elixir
     init_pair(68, COLOR_WHITE, 10);          //Monster
+
+    /* Battle Rooms */
+    init_pair(70, COLOR_CYAN, 10);           //Walls
+    init_pair(71, COLOR_GREEN, 10);          //Floor  
+    init_pair(72, COLOR_WHITE, COLOR_GREEN); //Stairs
+    init_pair(73, COLOR_BLACK, 10);          //Black Gold
+    init_pair(74, COLOR_YELLOW, 10);         //Gold
+    init_pair(75, 11, 10);                   //Armour
+    init_pair(76, 12, 10);                   //Food
+    init_pair(77, COLOR_MAGENTA, 10);        //Elixir
+    init_pair(78, COLOR_WHITE, 10);          //Monster
 
     /* HERO */
     init_pair(80, COLOR_RED, 10);
@@ -1673,6 +1684,37 @@ void moveMonsters() {
 
 void loseGame();
 
+void changeMusic() {
+    if (!isMusic) return;
+    short type = match.rooms[match.level][roomFinder(match.rooms[match.level], match.pos)].type;
+    if (type == -1) type = 1;
+    if (type != currentMusic) {
+        switch (type) {
+            case 0: break;
+            case 1: {
+                playMusic(tracks[match.music].dir);
+                currentMusic = 1;
+            } break;
+            case 2: {
+                playMusic(tracks[4].dir);
+                currentMusic = 2;
+            } break;
+            case 3: {
+                playMusic(tracks[3].dir);
+                currentMusic = 3;
+            } break;
+            case 4: {
+                playMusic(tracks[2].dir);
+                currentMusic = 4;
+            } break;
+            case 5: {
+                playMusic(tracks[1].dir);
+                currentMusic = 5;
+            } break;
+        }
+    }
+}
+
 void foodRot() {
     for (short i = 0; i < 5; i++) {
         if (match.foods[i].type == 0) continue;
@@ -1680,7 +1722,7 @@ void foodRot() {
         if (match.foods[i].state < 0) {
             switch (match.foods[i].type) {
                 case 1: {
-                    match.foods[i].type = 0;
+                    match.foods[i].type = 4;
                 } break;
                 case 2:
                 case 3: {
@@ -1851,6 +1893,7 @@ void moveTo(short y, short x, short skip) {
     }
 
     foodRot();
+    changeMusic();
     printMap(match.maps[match.level], match.level, 0);
     if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
 }
@@ -2430,6 +2473,7 @@ void deleteSave() {
 
 void loseGame() {
     if (death != -1) deleteSave();
+    if (isMusic) playMusic(tracks[match.music].dir);
     endwin();
     initSCR();
     char c, line[118];
@@ -2506,6 +2550,7 @@ void loseGame() {
 }
 
 void winGame() {
+    if (isMusic) playMusic(tracks[match.music].dir);
     deleteSave();
     char chest[20][81] = {
         "*******************************************************************************",
@@ -2937,6 +2982,7 @@ void setNewGame() {
             match.mons[i].seen = 1;
         }
     }
+    currentMusic = match.rooms[0][r].type;
 
     printMap(match.maps[match.level], match.level, 0);
     gplay();

@@ -1,4 +1,4 @@
-/* Ver 1.6.5 */
+/* Ver 1.6.6 */
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -15,6 +15,8 @@ struct track {
 
 
 Mix_Music *Music;
+char currentMusic;
+short isMusic = 0;
 
 int initAudio(char dir[]) {
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -30,6 +32,7 @@ int initAudio(char dir[]) {
     if (Mix_PlayMusic(Music, -1) == -1) {
         return 0;
     }
+    isMusic = 1;
     return 1;
 }
 
@@ -37,9 +40,10 @@ void freeAudio() {
     Mix_FreeMusic(Music);
     Mix_CloseAudio();
     SDL_Quit();
+    isMusic = 0;
 }
 
 void playMusic(char dir[]) {
-    freeAudio();
+    if (isMusic) freeAudio();
     initAudio(dir);
 }

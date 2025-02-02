@@ -1,4 +1,4 @@
-/* ver: 1.6.8 */
+/* ver: 1.7.0 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +13,9 @@
 
 #define MAXx 150
 #define MAXy 40
+#define Top 7
+#define Bottom 6
+#define Left 50
 #define ax 2
 #define bx 1
 #define ay 1
@@ -204,10 +207,11 @@ short wrong = 0;
 
 void delgPrompt() {
     gamePrompt[0] = '\0';
-    int row, col;
-    getmaxyx(stdscr, row, col);
-    for (int i = 0; i < col; i++){
-        mvprintw(0, i, " ");
+    attron(COLOR_PAIR(26));
+    for (int i = Top + MAXy + 2; i < Top + MAXy + 5; i++) {
+        for (int j = 2; j < MAXx/2 + 12; j++){
+            mvprintw(i, j, " ");
+        }
     }
     gtimer = 3;
 }
@@ -218,7 +222,7 @@ void gPrompt(char txt[]) {
     int row, col;
     getmaxyx(stdscr, row, col);
     attron(COLOR_PAIR(3));
-    mvprintw(0, 4, "%s", gamePrompt);
+    mvprintw(Top + MAXy + 3, 4, "%s", gamePrompt);
     attroff(COLOR_PAIR(3));
 }
 void gendTime() {
@@ -1076,34 +1080,202 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
     return sum;
 }
 
-void printMap(char map[MAXy][MAXx], short level, short cheat) {
-    
-    for (short i = 0; i < MAXy; i++) {
-        for (short j = 0; j < MAXx; j++) {
-            mvprintw(i+1,j, " ");
+void printBorders() {
+    attron(COLOR_PAIR(29));
+    short pos[6][4] = {
+        {0,0,Top + MAXy + Bottom,MAXx + Left},
+        {Top-1,1,Top + MAXy,MAXx + 2},
+        {Top + MAXy + 1, 1 ,Top + MAXy + Bottom - 1, MAXx/2+12},
+        {Top + MAXy + 1, MAXx/2+13, Top + MAXy + Bottom - 1,MAXx+2},
+        {Top - 1, MAXx + 3, Top + (MAXy + Bottom)/2 + 10, MAXx + Left - 1},
+        {Top + (MAXy + Bottom)/2 + 11, MAXx + 3, Top + MAXy + Bottom - 1, MAXx + Left - 1},
+    };
+    for (short i = 0; i < 6; i++) {
+        mvprintw(pos[i][0],pos[i][1],"\u2554");
+        mvprintw(pos[i][2], pos[i][3], "\u255D");
+        mvprintw(pos[i][0], pos[i][3],"\u2557");
+        mvprintw(pos[i][2], pos[i][1], "\u255A");
+        for (short j = pos[i][0] + 1; j < pos[i][2]; j++) {
+            mvprintw(j, pos[i][1], "\u2551");
+            mvprintw(j, pos[i][3], "\u2551");   
+        }
+        for (short j = pos[i][1] + 1; j < pos[i][3]; j++) {
+            mvprintw(pos[i][0], j, "\u2550");
+            mvprintw(pos[i][2], j, "\u2550");   
         }
     }
+}
 
-    // short count = 0;
-    // for (short i = 190; i < 210; i++) {
-    //     if (match.mons[i].type) count ++ ;
-    // }
-    // mvprintw(1,1,"%d", count);
+void printTop() {
+    char sign[5][97] = {
+        "   ___                                          ___                ___                         ",
+        "  / _ \\ ___   ___ _  _  ____                   / _ )              / _ \\ ___   / /  ___ _   _   ",
+        " / , _// _ \\ / _ // // // -_)                 / _  | / // /      / , _// _ \\ / _ \\/ _  / /  ' \\",
+        "/_/|_| \\___/ \\_, / \\_,_/ \\__/                /____/  \\_, /      /_/|_| \\___//_//_/\\_,_/ /_/_/_/",
+        "            /___/                                   /___/                                      "
+    };
+    for (short i = 0; i < 5; i++) {
+        mvprintw(i+1, (MAXx + Left - 96) / 2, "%s", sign[i]);
+    }
+} 
+
+void printInfo() {
     char li[5][15] = {"Mace", "Sword", "Dagger", "Magic Wand", "Normal Arrow"};
 
-    char invents[2*MAXx];
+    char invents[Left*2];
     char health[80] = "", hunger[50] = "";
     for (short i = 0; i < 20; i++) {
         strcat(health, (match.health >= (i+1) * 5) ? "\u2588": "\u2591"); 
         strcat(hunger, (match.hunger >= (i+1) * 9) ? "\u2588": "\u2591"); 
     }
+    attron(COLOR_PAIR(4));
+    switch (match.level) {
+        case 0: sprintf(invents, "First Floor"); break;
+        case 1: sprintf(invents, "Second Floor"); break;
+        case 2: sprintf(invents, "Third Floor"); break;
+        case 3: sprintf(invents, "Fourth Floor"); break;
+        case 4: sprintf(invents, "Treasure Chamber"); break;
+        case 5: sprintf(invents, "Battle Room"); break;
+    }
+    mvprintw(Top + 2, MAXx + 2 + (Left - strlen(invents))/2, "%s", invents);
+    sprintf(invents, "Gold:%23d", match.gold);
+    mvprintw(Top + 5, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    sprintf(invents, "Ancient Key:%16d", match.key);
+    mvprintw(Top + 8, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    sprintf(invents, "Broken Key:%17d", match.brKey);
+    mvprintw(Top + 11, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    sprintf(invents, "Health: %s", health);
+    mvprintw(Top + 14, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    sprintf(invents, "Hunger: %s", hunger);
+    mvprintw(Top + 17, MAXx + 2 + (Left - 28)/2, "%s", invents);
     if (match.equArm) {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\t%s: %d\tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, li[match.equArm-1], match.arm[match.equArm-1], health, hunger, match.level);
+        sprintf(invents, "%s: %*d", li[match.equArm-1], (int) (26 - strlen(li[match.equArm-1])), match.arm[match.equArm-1]);
     } else {
-        sprintf(invents, "Gold: %d\tAncient Key: %d\tBroken Key: %d\tUnarmed     \tHealth: %s\tHunger: %s\tLevel: %d", match.gold, match.key, match.brKey, health, hunger, match.level);
+        sprintf(invents, "%18s", "Unarmed");
+    }
+    mvprintw(Top + 20, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    switch (match.equArm) {
+        case 1: {
+            char weapon[9][60] = {
+                "                  ____     ",
+                "۷              . <    '    ",
+                "۷ ᴗᴗᴗᴗᴗᴗᴗᴗᴗᴗᴗᴗ'         \\  ",
+                "_ |||||||||||||      >   |>",
+                "_ ||||||||||||| >        |>",
+                "۸ ᴖᴖᴖᴖᴖᴖᴖᴖᴖᴖᴖᴖ         < . ",
+                "۸             '     >   /  ",
+                "                . ____'    "
+            };
+            for (short i = 0; i < 9; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 28)/2, "%s", weapon[i]);
+            }
+        } break;
+        case 0: {
+            char weapon[6][60] = {
+                " _   _ _   _  ___ _________  _______________ ",
+                "| | | | \\ | |/ _ \\| ___ |  \\/  |  ____|  _  \\",
+                "| | | |  \\| / /_\\ | |_/ | .  . | |___ | | | |",
+                "| | | | . ` |  _  |    /| |\\/| |  ___|| | | |",
+                "| |_| | |\\  | | | | |\\ \\| |  | | |____| |/ / ",
+                " \\___/\\_| \\_\\_| |_\\_| \\_\\_|  |__\\____/|___/"
+            };
+            for (short i = 0; i < 6; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+            }
+        } break;
+        case 2: {
+            char weapon[10][60] = {
+                "               ___",
+                "              ( ((",
+                "               ) ))",
+                "  .::.        / /(",
+                " 'M .-;-.-.-/| ((:::::::::::::::::::::::.._",
+                "(J ( ( ( ( ( |  ))   -=============-      _.>",
+                " P -;----\\|(::::::::::::::::::::::::::::''",
+                "  `::'        \\ \\(",
+                "               ) ))",
+                "               (_(("
+            };
+            for (short i = 0; i < 10; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+            }
+        } break;
+        case 3: {
+            char weapon[11][60] = {
+                "    /\\",
+                "   /  \\....",
+                "  /        \\...",   
+                " /             \\____________________________",
+                "|                           |  (@) _   (@) \\",
+                " \\...                       |       (_)    }|",
+                "    \\...................____| ( `--._.-' ) /",
+                "                             \\ `-._    _.-'/",
+                "                               \\   -.-'.-'",
+                "                                 `-._.-'",
+                "                                     "
+            };
+            for (short i = 0; i < 11; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+            }
+        } break;
+        case 4: {
+            char weapon[6][60] = {
+                "  .^.:.",
+                " <.*.'::.  *     .*",
+                "   █  .:''    .:'",
+                "   █  '::.  .:'",
+                "   █    ':::'    *",
+                " * █     `*'"
+            };
+            for (short i = 0; i < 6; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 19)/2, "%s", weapon[i]);
+            }
+        } break;
+
+        case 5: {
+            char weapon[3][60] = {
+                "    _",
+                ".-'` |___________________________//////",
+                "`'-._|                           \\\\\\\\\\\\",
+            };
+            for (short i = 0; i < 3; i++) {
+                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 40)/2, "%s", weapon[i]);
+            }
+        } break;
+    }
+}
+
+void printMusic() {
+    attron(COLOR_PAIR(26));
+    for (int i = Top + MAXy + 2; i < Top + MAXy + 5; i++) {
+        for (int j = MAXx/2 + 14; j < MAXx + 2; j++){
+            mvprintw(i, j, " ");
+        }
     }
     attron(COLOR_PAIR(4));
-    mvprintw(1, 4, "%s", invents);
+    if (isMusic) {
+        char music[80];
+        sprintf(music, "\u266B\u266B %s By the Author: %s \u266B\u266B", tracks[match.music].name, tracks[match.music].author);
+        mvprintw(MAXy+Top+3, MAXx/2 + 11 + MAXx/4 - strlen(music)/2, "%s", music);
+    } else {
+        char music[80];
+        sprintf(music, "Music Is Muted!");
+        mvprintw(MAXy+Top+3, MAXx/2 + 8 + MAXx/4 - strlen(music)/2, "%s", music);
+    }
+}
+
+void printMap(char map[MAXy][MAXx], short level, short cheat) {
+    attron(COLOR_PAIR(26));
+    for (short i = 0; i < MAXy + Top; i++) {
+        for (short j = 0; j < Left + MAXx; j++) {
+            mvprintw(i,j, " ");
+        }
+    }
+    printBorders();
+    printTop();
+    printInfo();
+    printMusic();
+
     attron(A_BOLD);
     for (short i = 0; i < MAXy; i++) {
         for (short j = 0; j < MAXx; j++) {
@@ -1204,7 +1376,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
             } else {
                 attron(COLOR_PAIR(cr+type*10 + 20));
             }
-            mvprintw(i+2,j,"%s", ch);
+            mvprintw(i + Top,j + 2,"%s", ch);
         }
     }
     for (short i = 0; i < match.monss; i++) {
@@ -1228,7 +1400,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                         
                     
     attron(COLOR_PAIR(80 + match.colour));
-    mvprintw(2+match.pos.y, match.pos.x, "%s", "\u265A");
+    mvprintw(Top+match.pos.y, match.pos.x + 2, "%s", "\u265A");
     attroff(A_BOLD);
     pair node = {match.pos.x, match.pos.y};
     short roomIn = roomFinder(match.rooms[level], node);
@@ -1239,7 +1411,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
         if (match.mons[i].type != 0 && match.mons[i].seen == 1 &&
             match.mons[i].level == match.level + 1) {
             char sym[6] = "DFGSU";
-            mvprintw(2+match.mons[i].pos.y, match.mons[i].pos.x, "%c", sym[match.mons[i].type-1]);
+            mvprintw(Top+match.mons[i].pos.y, match.mons[i].pos.x + 2, "%c", sym[match.mons[i].type-1]);
         }
     }
     attroff(COLOR_PAIR(3));
@@ -1318,7 +1490,10 @@ void mapCreator() {
     for (short i = 0; i < 3; i++) match.elixir[i] = 0;
     for (short i = 0; i < 5; i++) match.foods[i].type = 0;
     match.arm[0] = 1;
+    // match.arm[1] = 10;
     // match.arm[2] = 10;
+    // match.arm[3] = 10;
+    // match.arm[4] = 10;
     match.elixir[0] = 2;
     match.brKey = 0;
     match.equArm = 0;
@@ -2686,6 +2861,7 @@ short bplay() {
                     pauseMenu();
                     return bplay();
                 } break;
+                case '~': exit(0); /*DELETED*/
                 case UA:
                 case 'j':
                 case 'J':

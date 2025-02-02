@@ -1,4 +1,4 @@
-/* Ver 1.6.6 */
+/* Ver 1.7.0 */
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -11,12 +11,13 @@
 struct track {
     char name[20];
     char dir[30]; 
+    char author[20];
 };
 
 
 Mix_Music *Music;
 char currentMusic;
-short isMusic = 0;
+short isMusic = 1;
 
 int initAudio(char dir[]) {
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {

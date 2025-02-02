@@ -1,4 +1,4 @@
-/* ver: 1.7.1 */
+/* ver: 1.7.2 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +11,10 @@
 
 #define MUSICS 5
 
-#define MAXx 129
-#define MAXy 35
+// #define MAXx 129
+// #define MAXy 35
+#define MAXx 124 //DELETED
+#define MAXy 30 //DELETED
 #define Top 7
 #define Bottom 6
 #define Left 50
@@ -1137,23 +1139,23 @@ void printInfo() {
         case 4: sprintf(invents, "Treasure Chamber"); break;
         case 5: sprintf(invents, "Battle Room"); break;
     }
-    mvprintw(Top + 2, MAXx + 2 + (Left - strlen(invents))/2, "%s", invents);
+    mvprintw(Top + 1, MAXx + 2 + (Left - strlen(invents))/2, "%s", invents);
     sprintf(invents, "Gold:%23d", match.gold);
-    mvprintw(Top + 5, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 3, MAXx + 2 + (Left - 28)/2, "%s", invents);
     sprintf(invents, "Ancient Key:%16d", match.key);
-    mvprintw(Top + 8, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 5, MAXx + 2 + (Left - 28)/2, "%s", invents);
     sprintf(invents, "Broken Key:%17d", match.brKey);
-    mvprintw(Top + 11, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 7, MAXx + 2 + (Left - 28)/2, "%s", invents);
     sprintf(invents, "Health: %s", health);
-    mvprintw(Top + 14, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 9, MAXx + 2 + (Left - 28)/2, "%s", invents);
     sprintf(invents, "Hunger: %s", hunger);
-    mvprintw(Top + 17, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 11, MAXx + 2 + (Left - 28)/2, "%s", invents);
     if (match.equArm) {
         sprintf(invents, "%s: %*d", li[match.equArm-1], (int) (26 - strlen(li[match.equArm-1])), match.arm[match.equArm-1]);
     } else {
         sprintf(invents, "%18s", "Unarmed");
     }
-    mvprintw(Top + 20, MAXx + 2 + (Left - 28)/2, "%s", invents);
+    mvprintw(Top + 13, MAXx + 2 + (Left - 28)/2, "%s", invents);
     switch (match.equArm) {
         case 1: {
             char weapon[9][60] = {
@@ -1167,7 +1169,7 @@ void printInfo() {
                 "                . ____'    "
             };
             for (short i = 0; i < 9; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 28)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 28)/2, "%s", weapon[i]);
             }
         } break;
         case 0: {
@@ -1180,7 +1182,7 @@ void printInfo() {
                 " \\___/\\_| \\_\\_| |_\\_| \\_\\_|  |__\\____/|___/"
             };
             for (short i = 0; i < 6; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
             }
         } break;
         case 2: {
@@ -1197,7 +1199,7 @@ void printInfo() {
                 "               (_(("
             };
             for (short i = 0; i < 10; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
             }
         } break;
         case 3: {
@@ -1215,7 +1217,7 @@ void printInfo() {
                 "                                     "
             };
             for (short i = 0; i < 11; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 45)/2, "%s", weapon[i]);
             }
         } break;
         case 4: {
@@ -1228,7 +1230,7 @@ void printInfo() {
                 " * █     `*'"
             };
             for (short i = 0; i < 6; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 19)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 19)/2, "%s", weapon[i]);
             }
         } break;
 
@@ -1239,7 +1241,7 @@ void printInfo() {
                 "`'-._|                           \\\\\\\\\\\\",
             };
             for (short i = 0; i < 3; i++) {
-                mvprintw(Top + 22 + i, MAXx + 2 + (Left - 40)/2, "%s", weapon[i]);
+                mvprintw(Top + 17 + i, MAXx + 2 + (Left - 40)/2, "%s", weapon[i]);
             }
         } break;
     }
@@ -1264,6 +1266,28 @@ void printMusic() {
     }
 }
 
+void printTip() {
+    attron(COLOR_PAIR(26));
+    for (int i = Top + (MAXy + Bottom)/2 + 12; i < Top + MAXy + Bottom - 1; i++) {
+        for (int j = MAXx + 4; j < MAXx + Left - 1; j++){
+            mvprintw(i, j, " ");
+        }
+    }
+    attron(COLOR_PAIR(4));
+    
+    short max = Left - 5;
+
+    char tip[200];
+    short y = Top + (MAXy + Bottom)/2 + 12;
+    strcpy(tip, tips[tipn]);
+    while (strlen(tip) > max) {
+        mvprintw(y++, MAXx + 4, "%.*s", max, tip);
+        strcpy(tip, tip + max);
+        if (y >= Top + MAXy + Bottom - 2) break;
+    }
+    mvprintw(y, MAXx + 4, "%.*s", max, tip);
+}
+
 void printMap(char map[MAXy][MAXx], short level, short cheat) {
     attron(COLOR_PAIR(26));
     for (short i = 0; i < MAXy + Top; i++) {
@@ -1275,6 +1299,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     printTop();
     printInfo();
     printMusic();
+    printTip();
 
     attron(A_BOLD);
     for (short i = 0; i < MAXy; i++) {
@@ -2862,6 +2887,11 @@ short bplay() {
                     return bplay();
                 } break;
                 // case '~': exit(0); /*DELETED*/
+                case 't':
+                case 'T': {
+                    tipn = rand() % (TIPS - 1) + 1;
+                    printTip();
+                } break;
                 case UA:
                 case 'j':
                 case 'J':
@@ -2989,6 +3019,11 @@ short gplay() {
                     clear();
                     pauseMenu();
                     return gplay();
+                } break;
+                case 't':
+                case 'T': {
+                    tipn = rand() % (TIPS - 1) + 1;
+                    printTip();
                 } break;
                 case 'M':
                 case 'm': {

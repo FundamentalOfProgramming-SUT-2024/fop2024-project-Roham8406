@@ -1,4 +1,4 @@
-/*version 1.6.5*/
+/*version 1.7.2*/
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
@@ -11,11 +11,19 @@
 #define ES 27
 #define BS 7 
 
+#define TIPS 2
+
 
 char mainPrompt[100];
 time_t now;
 int timer = 1;
 int DELAY = 100000;
+
+char tips[TIPS][200] = {
+    "Have A Good Day, Mi Amigo! Press '\"T\" to See Tips! Good Luck Playing This Game...",
+    "Tips Are Not Added Yet!"
+};
+char tipn = 0;
 
 void delPrompt() {
     mainPrompt[0] = '\0';

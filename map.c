@@ -1,4 +1,4 @@
-/* ver: 2.0.3 */
+/* ver: 2.0.4 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -1560,6 +1560,7 @@ void initThemes() {
     init_color(12, 600, 999, 200); // Yellowish Green
 
     init_pair(4, COLOR_CYAN, 10);
+    init_pair(15, 10, 11);                   //Hallway Armour   
     init_pair(26, 10, 10);                   //Void
     init_pair(27, COLOR_RED, 10);            //Locked
     init_pair(28, COLOR_GREEN, 10);          //Unlocked
@@ -2662,7 +2663,12 @@ void pauseMenu() {
     }
 }
 int calcPoint() {
-    return match.gold * (1 + match.difficulty) * (1 + match.difficulty) * (1 + match.difficulty);
+    int point = match.gold * (1 + match.difficulty) * (1 + match.difficulty) * (1 + match.difficulty);
+    for (short i = 0; i < match.monss; i++) {
+        if (match.mons[i].type == 0) point += 5;
+    }
+    return point;
+
 }
 
 void treasureRoom() {

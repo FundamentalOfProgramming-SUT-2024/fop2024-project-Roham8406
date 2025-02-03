@@ -16,7 +16,7 @@ void inits() {
 
     player.anonymous = 1;
     strcpy(player.username, "Guest");
-    match.music = 2;
+    match.music = 7;
     short i = 0;
     strcpy(tracks[i].name, "N/A");
     strcpy(tracks[i].dir, "");
@@ -26,7 +26,7 @@ void inits() {
     strcpy(tracks[i].dir, "tracks/Overture.mp3");
     strcpy(tracks[i].author, "Alexander Nakarada");
     i++;
-    strcpy(tracks[i].name, "Hitman");
+    strcpy(tracks[i].name, "Forest Walk");
     strcpy(tracks[i].dir, "tracks/Forest_Walk.mp3");
     strcpy(tracks[i].author, "Alexander Nakarada");
     i++;
@@ -924,7 +924,7 @@ int main () {
 
 
     inits();    
-    initAudio("tracks/Hitman.mp3"); 
+    initAudio(tracks[match.music].dir); 
     mainMenu();   
 
     freeAudio();

@@ -1,4 +1,4 @@
-/*version 2.0.0*/
+/*version 2.0.2*/
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
@@ -11,7 +11,7 @@
 #define ES 27
 #define BS 7 
 
-#define TIPS 2
+#define TIPS 45
 
 
 char mainPrompt[100];
@@ -20,8 +20,51 @@ int timer = 1;
 int DELAY = 100000;
 
 char tips[TIPS][200] = {
-    "Have A Good Day, Mi Amigo! Press '\"T\" to See Tips! Good Luck Playing This Game...",
-    "Tips Are Not Added Yet!"
+    "Have A Good Day, Mi Amigo! Press \"T\" to See Tips! Good Luck Playing This Game...",
+    "Did you know that this game was first run on mini-systems at arcades?",
+    "Did you know Rogue is older than Pac-Man>!",
+    "Did you know that after Rogue was released, the games similar to the gaame were labeled as \"Roguelike\"?!",
+    "Did you know \"Beneath Apple Manor(1978)\", the first Roguelike game, was released two years before Rogue?!",
+    "Did you know Rogue was released in 1980! Five years sooner than C++!",
+    "Press Escape Button in order to pause the game.",
+    "Did you know you can move the Hero using your numpad when the numlock is turned on?",
+    "Fatigued of pressing keys? Press F+Direction to have a fast move!",
+    "Don't want to collect the object now? Press G+Direction to skip picking the object",
+    "Standing on a object you haven't picked? Press 5 to collect it.",
+    "You can move in 8 directions! If you disregard the stairs!",
+    "Seeing a monster and don't know what to do? Press I to select a weapon, then press Space to attack, if your weapon is long-ranged select the direction after that.",
+    "Using a Magic Wand spuns the enemy!",
+    "Press > on a > character to move upstairs and < on a < character to move downstairs,",
+    "Press > on T to go the Treasure Room",
+    "Kill all enemies in Treasure Room or Battle to room in order to get out of there.",
+    "The objective is to get to the Treasure Room and kill the enemies there, and then you'll win.",
+    "You need gold, thee are not a goblin, though! Anyway, the more, the merrier!",
+    "Too hard to locate the path? Press M and it'll be revealed!",
+    "Want to know where is the hidden doors and traps? Press S to scan until five places.",
+    "There are hidden doors out there!",
+    "Some locked doors are too old and you must enter the password reversed!",
+    "Some locked doors change their password after sometime",
+    "Some locked doors are doubleLocked, you must have two passwords, but you can use a key only for once.",
+    "Press K when the lock panel is revealed to unlock the door with the Ancient Key",
+    "Ancient Keys might get broken on use and therefore the door won't be unlocked yet.",
+    "Two Broken Keys are identical to one Ancient Key",
+    "Don't know what to do with elixirs? Press O in order to open Elixir Menu!",
+    "Your Health will be retreated if you're not too hungry.",
+    "By moving you get hungry."
+    "If you're to hungry, you risk your health.",
+    "Health Elixir retreats your helath if you're not hungry more quickly for a period of time.",
+    "Strenth Elixir, doubles your strenth for a period of time.",
+    "Speed Elixir, doubles your speed relative to the monsters for a period of time.",
+    "You can pick up the lost long-ranged shots!",
+    "Too hungry? Eat food! How to do that? Press E and you'll figure it out!",
+    "Rotten Food are identical with Regular Food!",
+    "If you don't eat Regular Food for a long time, it'll rot.",
+    "If you don't eat Magical/Excellent Food for a long time, it'll lose its perfectness.",
+    "Not-Rotten Food retreats helath and hunger.",
+    "Rotten Food risks your health.",
+    "Excellent Elixir, doubles your strenth for a period of time.",
+    "Magical Elixir, doubles your speed relative to the monsters for a period of time.",
+    "Did you know if there was no pile, then the dungeons would wreck!",
 };
 char tipn = 0;
 

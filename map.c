@@ -1,4 +1,4 @@
-/* ver: 2.0.1 */
+/* ver: 2.0.2 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -1255,7 +1255,7 @@ void printMusic() {
     attron(COLOR_PAIR(4));
     if (isMusic) {
         char music[80];
-        char musics[6] = {0, match.music, 4, 3, 2, 1};
+        char musics[6] = {0, match.music, 10, 3, 11, 5};
         sprintf(music, "\u266B\u266B %s by %s \u266B\u266B", tracks[musics[currentMusic]].name, tracks[musics[currentMusic]].author);
         mvprintw(MAXy+Top+3, MAXx/2 + 13 + MAXx/4 - strlen(music)/2, "%s", music);
     } else {
@@ -1654,15 +1654,15 @@ void revealCode(short pass, short mir) {
 }
 
 void printpwd(short state, char nums[4], short counter) {
-    init_pair(95, COLOR_CYAN, COLOR_MAGENTA);
-    attron(COLOR_PAIR(90+5));
-    for (short i = MAXy*0.2; i < MAXy * 0.8; i++) {
+    init_pair(95, COLOR_BLACK, 11);
+    attron(COLOR_PAIR(90+state));
+    for (short i = MAXy*0.2; i < MAXy; i++) {
         for (short j = MAXx*0.2; j < MAXx * 0.8; j++) {
-            mvprintw(i, j, " ");
+            mvprintw(i, j, "\u2592");
         }
     }
-    attron(COLOR_PAIR(90 + state));
-    for (short i = MAXy*0.2+2; i < MAXy * 0.8-2; i++) {
+    attron(COLOR_PAIR(90 + 5));
+    for (short i = MAXy*0.2+2; i < MAXy -2; i++) {
         for (short j = MAXx*0.2+2; j < MAXx * 0.8-2; j++) {
             mvprintw(i, j, " ");
         }
@@ -1683,7 +1683,7 @@ void printpwd(short state, char nums[4], short counter) {
         attron(A_BLINK);
         attron(A_STANDOUT);
     }
-    char space[20] = {7,6,5,4,3,2,2,2,2,3,7,7,6,5,4,3,3,4};
+    char space[20] = {7,6,5,4,3,2,2,2,2,3,8,8,7,6,5,4,4,5};
     char keyhole[20][25] = {
         "_________",
         "/         \\",
@@ -1694,7 +1694,7 @@ void printpwd(short state, char nums[4], short counter) {
         "|   |   (_)   |   |",
         "|   |  () ()  |   |",
         "|    \\_______/    |",
-        "\\___  ___  _____/",
+        "\\____  ___  ____/",
         "\\/_ _\\/",
         "/     \\",
         "/_______\\",
@@ -1702,7 +1702,7 @@ void printpwd(short state, char nums[4], short counter) {
         "/___________\\",
         "|#############|",
         "|#############|",
-        "\\____________/"
+        "\\___________/"
     };
     for (short i = 0; i < 20; i++) {
     
@@ -1916,7 +1916,7 @@ void changeMusic() {
                 currentMusic = 1;
             } break;
             case 2: {
-                playMusic(tracks[4].dir);
+                playMusic(tracks[10].dir);
                 currentMusic = 2;
             } break;
             case 3: {
@@ -1924,11 +1924,11 @@ void changeMusic() {
                 currentMusic = 3;
             } break;
             case 4: {
-                playMusic(tracks[2].dir);
+                playMusic(tracks[11].dir);
                 currentMusic = 4;
             } break;
             case 5: {
-                playMusic(tracks[1].dir);
+                playMusic(tracks[5].dir);
                 currentMusic = 5;
             } break;
         }
@@ -3205,7 +3205,7 @@ short gplay() {
                 
             }
         }
-        if (c==27) {endwin(); break;}
+        // if (c==27) {endwin(); break;}
         if (c) prev = c;
         printMap(match.maps[match.level], match.level, 0);
     }

@@ -1,4 +1,4 @@
-/* ver: 2.0.2 */
+/* ver: 2.0.3 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -2531,6 +2531,7 @@ short checkFilename(char name[]) {
     }
     return 1;
 }
+void deleteSave();
 
 void saveFile(char name[]) {
     if (checkFilename(name)) {
@@ -2584,6 +2585,8 @@ void saveFile(char name[]) {
                     Prompt("Game saved successfully!");
                     fclose(log);
                     fclose(fptr);
+                    deleteSave();
+                    strcpy(fileId, name);
                     return;
                 }
                 fclose(log);

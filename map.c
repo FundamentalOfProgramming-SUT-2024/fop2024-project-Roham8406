@@ -1,4 +1,4 @@
-/* ver: 2.0.0 */
+/* ver: 2.0.1 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -1255,8 +1255,9 @@ void printMusic() {
     attron(COLOR_PAIR(4));
     if (isMusic) {
         char music[80];
-        sprintf(music, "\u266B\u266B %s By the Author: %s \u266B\u266B", tracks[match.music].name, tracks[match.music].author);
-        mvprintw(MAXy+Top+3, MAXx/2 + 11 + MAXx/4 - strlen(music)/2, "%s", music);
+        char musics[6] = {0, match.music, 4, 3, 2, 1};
+        sprintf(music, "\u266B\u266B %s by %s \u266B\u266B", tracks[musics[currentMusic]].name, tracks[musics[currentMusic]].author);
+        mvprintw(MAXy+Top+3, MAXx/2 + 13 + MAXx/4 - strlen(music)/2, "%s", music);
     } else {
         char music[80];
         sprintf(music, "Music Is Muted!");
@@ -1339,8 +1340,17 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     if (match.seen[match.level][match.rooms[match.level][room].tl.y][match.rooms[match.level][room].tl.x]) reveal = 1;
                 }
             }
-            if (reveal) {
-                if ((abs(match.pos.y - i) > 5 || abs(match.pos.x - j) > 5) && cheat == 2) cheat = 0;
+            char State = 1;
+            if (cheat == 2 && abs(match.pos.y - i) < 5 && abs(match.pos.x - j) < 5) {
+                State = 0;
+                switch(map[i][j]) {
+                    case 9: strcpy(ch, "?"); cr = 0; break;
+                    case 21: strcpy(ch, "^"); cr = 1; break;
+                    default: State = 1;
+                }
+            }
+            if (reveal && State) {
+                // char Cheat = ((abs(match.pos.y - i) < 10 && abs(match.pos.x - j) < 10) && cheat == 2) ? 1 : 0;
                 switch(map[i][j]) {
                     case 0: strcpy(ch, " "); cr2 = 26; break;
                     case 1: strcpy(ch, "\u2554"); cr = 0; break;
@@ -1352,14 +1362,14 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     case 7: strcpy(ch, "."); cr = 1; break;
                     case 8: strcpy(ch, "\u256C"); cr = 0; break;
                     // case 9: strcpy(ch, "?"); cr = 0; break;
-                    case 9: strcpy(ch, cheat == 2 ? "?" : (map[i-1][j] == 6 || map[i+1][j] ==  6) ? "\u2551" : "\u2550"); cr = 0; break;
+                    case 9: strcpy(ch, (map[i-1][j] == 6 || map[i+1][j] ==  6) ? "\u2551" : "\u2550"); cr = 0; break;
                     case 10: strcpy(ch, "?"); cr = 0; break;
                     case 11: strcpy(ch, "@"); cr2 = 27; break;
                     case 12: strcpy(ch, "@"); cr2 = 28; break;
                     case 13: strcpy(ch, "\u2588"); cr2 = 29; break;
                     case 14: strcpy(ch, "&"); cr = 5; break;
                     case 20: strcpy(ch, "O"); cr = 0; break;
-                    case 21: strcpy(ch, cheat == 2 ? "^" : "."); cr = 1; break;
+                    case 21: strcpy(ch, "."); cr = 1; break;
                     case 22: strcpy(ch, "^"); cr = 1; break;
                     case 23: strcpy(ch, ">"); cr = 2; break;
                     case 24: strcpy(ch, "<"); cr = 2; break;
@@ -1391,7 +1401,7 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
                     defualt: strcpy(ch, " "); cr2 = 26; break;
 
                 }
-            } else {
+            } else if (State) {
                 strcpy(ch, " "); cr2 = 26;
             }
             if (cr2 != -1){
@@ -2120,6 +2130,19 @@ void fastmove(short x, short y) {
         }
         if (match.maps[match.level][match.pos.y+y][match.pos.x+x] == 11)
             state = match.maps[match.level][match.pos.y][match.pos.x] == 13;
+
+        int counter = match.level == 5 ? 190:0;
+        int moCount = match.level == 5 ? 210:match.monss;
+        for (short i = counter; i < moCount; i++) {
+            if (match.mons[i].level == match.level + 1) {
+                if (match.pos.y+y == match.mons[i].pos.y &&
+                    match.pos.x+x == match.mons[i].pos.x) {
+                    state = 0;
+                    break;
+                }
+            }    
+        }
+
         if (state) moveTo(match.pos.y + y, match.pos.x + x, 0);
     }
 }
@@ -2413,7 +2436,7 @@ void armMenu() {
 
     butts[match.equArm].state = 1;
     
-    short state = 1, active = match.equArm;
+    short state = 1, active = buttss[match.equArm];
     while (state) {
         int ind = menu(butts, 10, 1, active, "Select Weapon To Wield!", 1);
         if (ind > 1) {
@@ -3191,7 +3214,11 @@ short gplay() {
 
 void setNewGame() {
     Prompt("Initializing Map...");
-    sleep(2);
+    time_t a = time(NULL);
+    while (1) {
+        time_t b = time(NULL);
+        if (b-a > 1) break;
+    }
     clear();
     initThemes();   
 

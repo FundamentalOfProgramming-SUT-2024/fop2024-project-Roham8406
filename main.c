@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:2.0.0*/
+/* By Roham Ghasemi Qomi; The Rogue; v:2.0.1*/
 #include "map.c"
 
 void mainMenu();
@@ -750,7 +750,7 @@ void Setting() {
     strcpy(butts[0].label, "Colour of the Hero: ");
     butts[0].state = 1;
     butts[0].options = 6;
-    butts[0].currentOption = 0;
+    butts[0].currentOption = match.colour;
     strcpy(butts[0].list[0], "Red");
     strcpy(butts[0].list[1], "Blue");
     strcpy(butts[0].list[2], "Magmenta");
@@ -762,7 +762,7 @@ void Setting() {
     strcpy(butts[1].label, "Difficulty of the Game: ");
     butts[1].state = 0;
     butts[1].options = 3;
-    butts[1].currentOption = 0;
+    butts[1].currentOption = match.difficulty;
     strcpy(butts[1].list[0], "Noob");
     strcpy(butts[1].list[1], "So-So");
     strcpy(butts[1].list[2], "Legend");
@@ -771,7 +771,7 @@ void Setting() {
     strcpy(butts[2].label, "Background Music: ");
     butts[2].state = 0;
     butts[2].options = MUSICS;
-    butts[2].currentOption = 0;
+    butts[2].currentOption = match.music;
     for (short i = 0; i < MUSICS; i++) {
         strcpy(butts[2].list[i], tracks[i].name);
     }

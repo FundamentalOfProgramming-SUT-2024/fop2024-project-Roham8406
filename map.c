@@ -1,4 +1,4 @@
-/* ver: 2.0.4 */
+/* ver: 2.0.5 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -112,6 +112,12 @@ typedef struct food {
    short state;
 } food;
 
+typedef struct arm {
+    short type;
+    pair pos;
+    short level;
+} Arm;
+
 struct game {
     short colour;
     short difficulty;
@@ -139,6 +145,7 @@ struct game {
     short fast;
     pair last;
     short lastLevel;
+    Arm usedArms[400];
 };
 
 
@@ -1432,11 +1439,6 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
     
                         
                     
-    attron(COLOR_PAIR(80 + match.colour));
-    mvprintw(Top+match.pos.y, match.pos.x + 2, "%s", "\u265A");
-    attroff(A_BOLD);
-    pair node = {match.pos.x, match.pos.y};
-    short roomIn = roomFinder(match.rooms[level], node);
     attron(COLOR_PAIR(3));
     int counter = match.level == 5 ? 190:0;
     int moCount = match.level == 5 ? 210:match.monss;
@@ -1447,6 +1449,20 @@ void printMap(char map[MAXy][MAXx], short level, short cheat) {
             mvprintw(Top+match.mons[i].pos.y, match.mons[i].pos.x + 2, "%c", sym[match.mons[i].type-1]);
         }
     }
+    attron(COLOR_PAIR(80 + match.colour));
+    mvprintw(Top+match.pos.y, match.pos.x + 2, "%s", "\u265A");
+    attroff(A_BOLD);
+    pair node = {match.pos.x, match.pos.y};
+    short roomIn = roomFinder(match.rooms[level], node);
+    char weapons[3][8] = {"\U0001F5E1", "\u269A", "\u27B3"};
+    attron(COLOR_PAIR(5+match.rooms[match.level][roomIn].type*10 + 20));
+    for (short i = 0; i < 400; i++) {
+        if (match.usedArms[i].type != 0 &&
+            match.usedArms[i].level == match.level) {
+            mvprintw(Top+match.usedArms[i].pos.y, match.usedArms[i].pos.x + 2, "%s", weapons[match.usedArms[i].type-3]);
+        }
+    }
+    
     attroff(COLOR_PAIR(3));
 }
 
@@ -1957,6 +1973,7 @@ void foodRot() {
 
 void moveTo(short y, short x, short skip) {
     death = 0;
+    
     if (match.hunger < 30 && match.intermission <= 0) {
         if (match.heal > 0) match.health += 2;
         else match.health ++;
@@ -2116,6 +2133,21 @@ void moveTo(short y, short x, short skip) {
     foodRot();
     changeMusic();
     printMap(match.maps[match.level], match.level, 0);
+    for (short i = 0; i < 400; i++) {
+        if (match.usedArms[i].type) {
+            if (match.usedArms[i].level == match.level) {
+                if (match.usedArms[i].pos.x == match.pos.x &&
+                    match.usedArms[i].pos.y == match.pos.y) {
+                    match.arm[match.usedArms[i].type - 1] ++;
+                    char weap[3][20] = {"Dagger", "Magic Wand", "Normal Arrow"};
+                    char line[60];
+                    sprintf(line, "You Retreated Thy Weapon, That %s I Mean!", weap[match.usedArms[i].type-3]);
+                    gPrompt(line);
+                    match.usedArms[i].type = 0;
+                }
+            }
+        }
+    }
     if (match.health < 0) loseGame(); /* MUST BE UNCOMMENTED */
 }
 
@@ -2306,7 +2338,25 @@ void attack(short prev) {
                 match.equArm = 0;
                 gPrompt("You're out of shot!");
             }
-            if (state) match.maps[match.level][y][x] = match.equArm + 33;
+            if (state) {
+                short i = 0;
+                for (; i < 400; i++) {
+                    if (match.usedArms[i].type) continue;
+                    match.usedArms[i].type = match.equArm;
+                    match.usedArms[i].pos.y = y;
+                    match.usedArms[i].pos.x = x;
+                    match.usedArms[i].level = match.level;
+                    break;
+                    // match.maps[match.level][y][x] = match.equArm + 33;
+                }
+                if (i == 400) {
+                    i = rand() % 400;
+                    match.usedArms[i].type = match.equArm;
+                    match.usedArms[i].pos.y = y;
+                    match.usedArms[i].pos.x = x;
+                    match.usedArms[i].level = match.level;
+                }
+            }
         }
     }
     short state = 1;
@@ -3238,6 +3288,12 @@ void setNewGame() {
         if (match.mons[i].level == 1 && match.mons[i].room == r) {
             match.mons[i].seen = 1;
         }
+    }
+    for (short i = 0; i < 400; i++) {
+        match.usedArms[i].level = -1;
+        match.usedArms[i].type = 0;
+        match.usedArms[i].pos.x = -1;
+        match.usedArms[i].pos.y = -1; 
     }
     currentMusic = match.rooms[0][r].type;
 

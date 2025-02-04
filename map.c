@@ -1,4 +1,4 @@
-/* ver: 2.0.5 */
+/* ver: 2.0.6 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -888,9 +888,9 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
         if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
         if (rooms[i].type == 4) {
-            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
-            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
-            if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
+            map[x + rand() % length][y + rand() % width] = 21;
+            map[x + rand() % length][y + rand() % width] = 21;
+            map[x + rand() % length][y + rand() % width] = 21;
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
             if (rand() % piap == 0) map[x + rand() % length][y + rand() % width] = 21;
@@ -1044,7 +1044,7 @@ int floorRandomizer(room rooms[12], char map[MAXy][MAXx], short level, room *fir
         // } else {
             do {
                 r = rand() % k;
-            } while (isIn(rooms[k].tl, *stair, rooms[k].br) && exe--);
+            } while (isIn(rooms[r].tl, *stair, rooms[r].br) && exe--);
         // }
         stair->x = rooms[r].tl.x + 2 + rand()%(rooms[r].br.x - rooms[r].tl.x - 3);
         stair->y = rooms[r].tl.y + 2 + rand()%(rooms[r].br.y - rooms[r].tl.y - 3);

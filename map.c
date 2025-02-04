@@ -1,4 +1,4 @@
-/* ver: 2.0.6 */
+/* ver: 2.1.0 */
 
 #include <stdlib.h>
 #include <string.h>
@@ -1132,7 +1132,7 @@ void printInfo() {
     char invents[Left*2];
     char health[80] = "", hunger[50] = "";
     for (short i = 0; i < 20; i++) {
-        strcat(health, (match.health >= (i+1) * 5) ? "\u2588": "\u2591"); 
+        strcat(health, (match.health >= (i+1) * 6) ? "\u2588": "\u2591"); 
         strcat(hunger, (match.hunger >= (i+1) * 9) ? "\u2588": "\u2591"); 
     }
     attron(COLOR_PAIR(4));
@@ -1547,7 +1547,7 @@ void mapCreator() {
     match.brKey = 0;
     match.equArm = 0;
     match.gold = 0;
-    match.health = 100;
+    match.health = 120;
     match.hunger = 0;
     match.key = 0;
     
@@ -1985,6 +1985,7 @@ void moveTo(short y, short x, short skip) {
     match.strength --;
     match.heal --;
     if (match.hunger > 180) match.hunger = 180;
+    if (match.health > 120) match.health = 120;
     if (match.intermission < 0) match.intermission = 0;
     if (match.fast < 0) match.fast = 0;
     if (match.strength < 0) match.strength = 0;

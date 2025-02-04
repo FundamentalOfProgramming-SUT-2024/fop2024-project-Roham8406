@@ -1,4 +1,4 @@
-/* By Roham Ghasemi Qomi; The Rogue; v:2.0.1*/
+/* By Roham Ghasemi Qomi; The Rogue; v:2.0.5*/
 #include "map.c"
 
 void mainMenu();
@@ -796,6 +796,86 @@ void Setting() {
     while (1) {}
 }
 
+void profileMenu() {
+    initSCR();
+    
+    
+    timer = 5;
+    char username[30], password[30], email[30];
+    int points, golds;
+    short matches, i = 0;
+    unsigned long long tim;
+    FILE *fptr;
+    fptr = fopen("data/users.txt", "r");
+    char line[200];
+    fgets(line, 200, fptr);
+    while (fgets(line, 200, fptr)) {
+        if (line[0] == '\0') continue;
+        sscanf(line, "%s %s %s %d %d %hd %llu", username, password, email, &points, &golds, &matches, &tim);
+        if (!strcmp(player.username, username)) break;
+    }
+    fclose(fptr);
+    
+    struct button butts[6];
+    butts[i].type = 0;
+    sprintf(butts[i].label, "Have A Good Day, %s the Hero", username);
+    butts[i].state = 1;
+    i++;
+
+    butts[i].type = 0;
+    sprintf(butts[i].label, "Email Address: %s", email);
+    butts[i].state = 0;
+    i++;
+
+    butts[i].type = 0;
+    sprintf(butts[i].label, "Points: %d, Avg: %.2lf", points, (double)points/matches);
+    butts[i].state = 0;
+    i++;
+
+    butts[i].type = 0;
+    sprintf(butts[i].label, "Golds: %d, Avg: %.2lf", golds, (double)golds/matches);
+    butts[i].state = 0;
+    i++;
+
+    butts[i].type = 0;
+    sprintf(butts[i].label, "Matches Won: %d", matches);
+    butts[i].state = 0;
+    i++;
+
+    time_t now = time(NULL);
+    time_t pass = now - tim;
+    butts[i].type = 0;
+    if (pass >= 365*24*60*60) {
+        sprintf(butts[i].label, "You've been here for %ld year(s) & %ld day(s)",  pass/365/24/60/60, pass/24/60/60 % 365);
+    } else if (pass >= 30*24*60*60) {
+        sprintf(butts[i].label, "You've been here for %ld month(s) & %ld day(s)",  pass/30/24/60/60, pass/24/60/60 % 30);
+    } else if (pass >= 24*60*60) {
+        sprintf(butts[i].label, "You've been here for %ld days(s) & %ld hour(s)",  pass/24/60/60, pass/60/60 % 24);
+    } else if (pass >= 60*60) {
+        sprintf(butts[i].label, "You've been here for %ld hour(s) & %ld minute(s)",  pass/60/60, pass/60 % 60);
+    } else if (pass >= 60) {
+        sprintf(butts[i].label, "You've been here for %ld minute(s) & %ld second(s)",  pass/60, pass%60);
+    } else {
+        sprintf(butts[i].label, "You've been here for %ld seconds",  pass);
+    }
+    butts[i].state = 0;
+    i++;
+    
+
+    
+    short state = 1, active = 0;
+    while (state) {
+        int ind = menu(butts, i, 1, active, "Profile Menu: ",1);
+        if (ind == 0) {
+            clear();
+            endwin();
+            mainMenu();
+            return;
+        }
+
+    }
+}
+
 
 
 void mainMenu() {
@@ -828,6 +908,11 @@ void mainMenu() {
         strcat(butts[i].label, player.username);
         butts[i].state = 0;
         strcpy(butts[i].value,"2");
+        i++;
+        butts[i].type = 0;
+        strcpy(butts[i].label, "Profile");
+        butts[i].state = 0;
+        strcpy(butts[i].value,"8");
         i++;
     }
 
@@ -912,6 +997,12 @@ void mainMenu() {
                 clear();
                 endwin();
                 mainMenu();
+                return;
+            } break;
+            case 8:{
+                clear();
+                endwin();
+                profileMenu();
                 return;
             } break;
         }
